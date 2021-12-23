@@ -50,7 +50,7 @@ class RGB8Bit {
         if(this.blue > 1) {this.blue = 1;}
     }
 
-    add(color){
+    plus(color){
         let outRGB = new RGB8Bit();
 
         outRGB.red = this.red + color.red; 
@@ -60,7 +60,7 @@ class RGB8Bit {
         return outRGB;
     }
 
-    subtract(color){
+    minus(color){
         let outRGB = new RGB8Bit();
 
         outRGB.red = this.red - color.red; 
@@ -95,9 +95,17 @@ class RGB8Bit {
 
         return outRGB;
     }
+
+    absouluteValue(){
+        let outRGB = new RGB8Bit(); 
+
+        outRGB.red = Math.abs(this.red); 
+        outRGB.green = Math.abs(this.green);
+        outRGB.blue = Math.abs(this.blue);
+
+        return outRGB; 
+    }
 }
-
-
 
 function convert8BitPixelValueToFloat(inputValue){
     return inputValue / 255;
@@ -125,65 +133,60 @@ function composite( bgImg, fgImg, fgOpac, fgPos )
         let fgRGB = new RGB8Bit(fgImg.data[i + 0], fgImg.data[i + 1], fgImg.data[i + 2]);
         let fgAlpha = fgOpac * (fgImg.data[i + 3] / 255);
 
-        let blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+        let blendColor = differenceBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
         let blendColor8BitValues = blendColor.get8BitPixelValue();
 
         bgImg.data[i + 0] = blendColor8BitValues.red; 
         bgImg.data[i + 1] = blendColor8BitValues.green; 
         bgImg.data[i + 2] = blendColor8BitValues.blue; 
-
-        // console.log("Background Image -", 
-        //             "Red: ", bgImg.data[i + 0], 
-        //             "Green: ", bgImg.data[i + 1], 
-        //             "Blue: ", bgImg.data[i + 2], 
-        //             "Alpha: ", bgImg.data[i + 3] 
-        //             );
-
-        // console.log("Foreground Image -", 
-        //             "Red: ", fgImg.data[i + 0], 
-        //             "Green: ", fgImg.data[i + 1], 
-        //             "Blue: ", fgImg.data[i + 2], 
-        //             "Alpha: ", fgImg.data[i + 3] 
-        //             );
-
     }
-      
 }
 
 function alphaBlend(bgColor, bgAlpha, fgColor, fgAlpha){
-    // // Alpha Blending (over)
-    // bgImg.data[i + 0] = convertFloatTo8BitPixelValue(((fgOpac * (fgImg.data[i + 3]/255)) * (fgImg.data[i + 0]/255)) + ((1 - (fgOpac * (fgImg.data[i + 3]/255) )) * (bgImg.data[i + 0]/255)));
-    // bgImg.data[i + 1] = convertFloatTo8BitPixelValue(((fgOpac * (fgImg.data[i + 3]/255)) * (fgImg.data[i + 1]/255)) + ((1 - (fgOpac * (fgImg.data[i + 3]/255) )) * (bgImg.data[i + 1]/255)));
-    // bgImg.data[i + 2] = convertFloatTo8BitPixelValue(((fgOpac * (fgImg.data[i + 3]/255)) * (fgImg.data[i + 2]/255)) + ((1 - (fgOpac * (fgImg.data[i + 3]/255) )) * (bgImg.data[i + 2]/255)));
-
     let outputColor = new RGB8Bit(); 
 
-    // c = af*cf + (1-af)*ab*cb
+    // Alpha Blending (over)
     // outputColor = fgAlpha * fgColor + (1-fgAlpha)*bgAlpha*bgColor
     let fgPremultColor = fgColor.scalerMultiply(fgAlpha);
     let bgPremultColor = bgColor.scalerMultiply(bgAlpha).scalerMultiply((1-fgAlpha)); 
-    outputColor = fgPremultColor.add(bgPremultColor); 
+    outputColor = fgPremultColor.plus(bgPremultColor); 
 
     return outputColor;
 }
 
-function additiveBlend(c1, c2){
-    // // Additive Blending
-    // bgImg.data[i + 0] = convertFloatTo8BitPixelValue(((fgImg.data[i + 3]/255)*(fgImg.data[i + 0]/255)) + (bgImg.data[i + 0]/255));
-    // bgImg.data[i + 1] = convertFloatTo8BitPixelValue(((fgImg.data[i + 3]/255)*(fgImg.data[i + 1]/255)) + (bgImg.data[i + 1]/255));
-    // bgImg.data[i + 2] = convertFloatTo8BitPixelValue(((fgImg.data[i + 3]/255)*(fgImg.data[i + 2]/255)) + (bgImg.data[i + 2]/255));
+function additiveBlend(bgColor, bgAlpha, fgColor, fgAlpha){
 
+    let outputColor = new RGB8Bit(); 
+
+    // Additive Blending
+    // outputColor = fgAlpha * fgColor + bgColor
+    let fgPremultColor = fgColor.scalerMultiply(fgAlpha)
+    outputColor = fgPremultColor.plus(bgColor);
+
+    return outputColor;
 }
 
-function differenceBlend(c1, c2){
+function differenceBlend(bgColor, bgAlpha, fgColor, fgAlpha){
+
+    let outputColor = new RGB8Bit(); 
+
     // Difference Blending
+    // outputColor = |fgAlpha * fgColor - bgColor|
+    let fgPremultColor = fgColor.scalerMultiply(fgAlpha) 
+    outputColor = fgPremultColor.minus(bgColor).absouluteValue(); 
 
+    return outputColor;
 }
 
-function multiplyBlend(c1, c2){
-    // // Multiply Blending
-    // bgImg.data[i + 0] = convertFloatTo8BitPixelValue(((fgImg.data[i + 0]/255) * (bgImg.data[i + 0]/255)) + ((1-(fgImg.data[i + 3]/255))*(bgImg.data[i + 0]/255))); //red
-    // bgImg.data[i + 1] = convertFloatTo8BitPixelValue(((fgImg.data[i + 1]/255) * (bgImg.data[i + 1]/255)) + ((1-(fgImg.data[i + 3]/255))*(bgImg.data[i + 1]/255))); //green
-    // bgImg.data[i + 2] = convertFloatTo8BitPixelValue(((fgImg.data[i + 2]/255) * (bgImg.data[i + 2]/255)) + ((1-(fgImg.data[i + 3]/255))*(bgImg.data[i + 2]/255))); //blue
+function multiplyBlend(bgColor, bgAlpha, fgColor, fgAlpha){
 
+    let outputColor = new RGB8Bit(); 
+
+    // Multiply Blending
+    // outputColor = fgAlpha * (fgColor * bgColor) + (1 - fgAlpha)*bgColor
+    let fgPremultColor = fgColor.multiply(bgColor).scalerMultiply(fgAlpha);
+    let bgPremultColor = bgColor.scalerMultiply(1-fgAlpha);
+    outputColor = fgPremultColor.plus(bgPremultColor); 
+
+    return outputColor;
 }
