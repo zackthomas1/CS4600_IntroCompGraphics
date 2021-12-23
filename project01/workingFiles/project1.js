@@ -21,14 +21,19 @@ class RGB8Bit {
     }
 
     getFloatValue(){
-        return [this.red, this.green, this.blue];
+        return {
+            'red': this.red, 
+            'green': this.green, 
+            'blue': this.blue
+        };
     }
 
     get8BitPixelValue(){
-        return [Math.floor(this.red*255), 
-                Math.floor(this.green*255), 
-                Math.floor(this.blue*255)
-            ];
+        return {
+                'red': Math.floor(this.red*255), 
+                'green': Math.floor(this.green*255), 
+                'blue': Math.floor(this.blue*255)
+            };
     }
 
     clampBlacks(){
@@ -120,11 +125,12 @@ function composite( bgImg, fgImg, fgOpac, fgPos )
         let fgRGB = new RGB8Bit(fgImg.data[i + 0], fgImg.data[i + 1], fgImg.data[i + 2]);
         let fgAlpha = fgOpac * (fgImg.data[i + 3] / 255);
 
-        let blendColor = alphaBlend();
+        let blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+        let blendColor8BitValues = blendColor.get8BitPixelValue();
 
-        bgImg.data[i + 0] = blendColor.red; 
-        bgImg.data[i + 1] = blendColor.green; 
-        bgImg.data[i + 2] = blendColor.blue;
+        bgImg.data[i + 0] = blendColor8BitValues.red; 
+        bgImg.data[i + 1] = blendColor8BitValues.green; 
+        bgImg.data[i + 2] = blendColor8BitValues.blue; 
 
         // console.log("Background Image -", 
         //             "Red: ", bgImg.data[i + 0], 
