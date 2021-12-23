@@ -1,0 +1,95 @@
+html {
+	color: #aaa;
+	background-color: #333;
+	font-family: Arial;
+}
+#canvasdiv {
+	position: fixed;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 70%;
+	text-align: center;
+	display: flex;
+}
+#canvasdiv.canmove {
+	cursor: move;
+}
+#canvas {
+	max-width: 100%;
+	margin: auto;
+	background-color: black;
+	pointer-events: none;
+}
+#controldiv {
+	position: fixed;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 30%;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	background-color: #444;
+}
+#controlholder {
+	margin: .5em;
+}
+#addimage {
+	display: block;
+	font-size: 300%;
+	text-align: center;
+	color: #aaa;
+	border: .07em solid #aaa;
+	border-radius: .2em;
+	font-weight: bold;
+	text-decoration: none;
+	background-color: #666;
+}
+#addimage:hover {
+	color: white;
+	border-color: white;
+	background-color: #888;
+}
+.layer {
+	border: 1px solid #aaa;
+	margin: 1em 0;
+	position: relative;
+	cursor: move;
+	cursor: grab;
+}
+.closebtn {
+	position: absolute;
+	right: 0;
+	top: 0;
+	color: white;
+	background-color: #a00;
+	padding: .2em;
+	border: 1px solid #aaa;
+	font-weight: bold;
+	text-decoration: none;
+	cursor: pointer;
+	font-size: 80%;
+}
+.closebtn:hover {
+	background-color: #f00;
+	border-color: white;
+}
+.layer file {
+	width: 100%;
+}
+.layer img {
+	width: 100%;
+	background-image: linear-gradient(45deg, #aaa 25%, transparent 0%), linear-gradient(135deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(135deg, transparent 75%, #aaa 0%);
+    background-size: 25px 25px;
+    background-position: 0 0, 12.5px 0, 12.5px -12.5px, 0px 12.5px;
+    background-color: #666;
+}
+#opac {
+	width: 100%;
+	margin: 1em 0;
+}
+.layer[title="selected"] {
+	outline: 4px solid white;
+	background-color: white;
+	color: black;
+}
