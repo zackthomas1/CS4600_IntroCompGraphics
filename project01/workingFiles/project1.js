@@ -115,10 +115,13 @@ function convertFloatTo8BitPixelValue(inputValue){
     return Math.ceil(inputValue * 255);
 }
 
-// bgImg is the background image to be modified.
-// fgImg is the foreground image.
-// fgOpac is the opacity of the foreground image.
-// fgPos is the position of the foreground image in pixels. It can be negative and (0,0) means the top-left pixels of the foreground and background are aligned.
+/**
+ * Composite foreground and background images
+ * @param {*} bgImg background image to be modified.
+ * @param {*} fgImg foreground image.
+ * @param {*} fgOpac opacity of the foreground image.
+ * @param {*} fgPos position of the foreground image in pixels. It can be negative and (0,0) means the top-left pixels of the foreground and background are aligned.
+ */
 function composite( bgImg, fgImg, fgOpac, fgPos )
 {
     console.log("Background Data Size: ", bgImg.data.length, "Background Data: ",  bgImg.data);
