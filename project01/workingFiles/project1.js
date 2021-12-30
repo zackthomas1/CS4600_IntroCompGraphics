@@ -127,21 +127,46 @@ function composite( bgImg, fgImg, fgOpac, fgPos )
     console.log("Background Data Size: ", bgImg.data.length, "Background Data: ",  bgImg.data);
     console.log("Foreground Data Size: ", fgImg.data.length, "Foreground Data: ",  fgImg.data);
 
-    // Iterate through every pixel
-    for (let i = 0; i < bgImg.data.length; i += 4) {
+    let bgOffset = {x : fgPos.x, y : fgPos.y}
+    let fgOffset = {x : 0, y : 0}
+    if(fgPos.x < 0){
+        bgOffset.x = 0; 
+        fgOffset.x = Math.abs(fgPos.x);
+    }
+    if(fgPos.y < 0){
+        bgOffset.y = 0; 
+        fgOffset.y = Math.abs(fgPos.y);
+    }
+    let bgIndex = (bgImg.width * bgOffset.y + bgOffset.x) * 4; // background start index
+    let fgIndex = (fgImg.width * fgOffset.y + fgOffset.x) * 4; // foreground start index
 
-        let bgRGB = new RGB8Bit(bgImg.data[i + 0], bgImg.data[i + 1], bgImg.data[i + 2]);
-        let bgAlpha = bgImg.data[i + 3] / 255;
+    let xCoord = bgOffset.x; 
+    let yCoord = bgOffset.y;
+    while(bgOffset.y <= yCoord && yCoord < fgImg.height + bgOffset.y) {
 
-        let fgRGB = new RGB8Bit(fgImg.data[i + 0], fgImg.data[i + 1], fgImg.data[i + 2]);
-        let fgAlpha = fgOpac * (fgImg.data[i + 3] / 255);
+        if( bgOffset.x <= xCoord && xCoord < fgImg.width + bgOffset.x){
+            let bgRGB = new RGB8Bit(bgImg.data[bgIndex + 0], bgImg.data[bgIndex + 1], bgImg.data[bgIndex + 2]);
+            let bgAlpha = bgImg.data[bgIndex + 3] / 255;
+    
+            let fgRGB = new RGB8Bit(fgImg.data[fgIndex + 0], fgImg.data[fgIndex + 1], fgImg.data[fgIndex + 2]);
+            let fgAlpha = fgOpac * (fgImg.data[fgIndex + 3] / 255);
+    
+            let blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+            let blendColor8BitValues = blendColor.get8BitPixelValue();
+    
+            bgImg.data[bgIndex + 0] = blendColor8BitValues.red; 
+            bgImg.data[bgIndex + 1] = blendColor8BitValues.green; 
+            bgImg.data[bgIndex + 2] = blendColor8BitValues.blue;
+            
+            fgIndex += 4;
+        }
 
-        let blendColor = differenceBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
-        let blendColor8BitValues = blendColor.get8BitPixelValue();
-
-        bgImg.data[i + 0] = blendColor8BitValues.red; 
-        bgImg.data[i + 1] = blendColor8BitValues.green; 
-        bgImg.data[i + 2] = blendColor8BitValues.blue; 
+        bgIndex += 4;
+        ++xCoord;
+        if(xCoord % bgImg.width === 0){
+            xCoord = 0; 
+            ++yCoord;
+        }
     }
 }
 
