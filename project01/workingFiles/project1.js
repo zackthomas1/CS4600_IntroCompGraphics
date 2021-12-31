@@ -127,47 +127,55 @@ function composite( bgImg, fgImg, fgOpac, fgPos )
     console.log("Background Data Size: ", bgImg.data.length, "Background Data: ",  bgImg.data);
     console.log("Foreground Data Size: ", fgImg.data.length, "Foreground Data: ",  fgImg.data);
 
-    let bgOffset = {x : fgPos.x, y : fgPos.y}
-    let fgOffset = {x : 0, y : 0}
+    let bgCoord = {x : fgPos.x, y : fgPos.y}
+    let fgCoord = {x : 0, y : 0}
     if(fgPos.x < 0){
-        bgOffset.x = 0; 
-        fgOffset.x = Math.abs(fgPos.x);
+        bgCoord.x = 0; 
+        fgCoord.x = Math.abs(fgPos.x);
     }
     if(fgPos.y < 0){
-        bgOffset.y = 0; 
-        fgOffset.y = Math.abs(fgPos.y);
+        bgCoord.y = 0; 
+        fgCoord.y = Math.abs(fgPos.y);
     }
-    let bgIndex = (bgImg.width * bgOffset.y + bgOffset.x) * 4; // background start index
-    let fgIndex = (fgImg.width * fgOffset.y + fgOffset.x) * 4; // foreground start index
 
-    let xCoord = bgOffset.x; 
-    let yCoord = bgOffset.y;
-    while(bgOffset.y <= yCoord && yCoord < fgImg.height + bgOffset.y) {
+    const bgXReset = bgCoord.x;
+    const fgXReset = fgCoord.x 
 
-        if( bgOffset.x <= xCoord && xCoord < fgImg.width + bgOffset.x){
-            let bgRGB = new RGB8Bit(bgImg.data[bgIndex + 0], bgImg.data[bgIndex + 1], bgImg.data[bgIndex + 2]);
-            let bgAlpha = bgImg.data[bgIndex + 3] / 255;
+    while(fgCoord.y < fgImg.height && bgCoord.y < bgImg.height) {
+        while(fgCoord.x < fgImg.width && bgCoord.x < bgImg.width){
+            const bgRGB = getColorAlphaForCoord(bgCoord.x, bgCoord.y, bgImg).color;
+            const bgAlpha = getColorAlphaForCoord(bgCoord.x, bgCoord.y, bgImg).alpha;    
+
+            const fgRGB = getColorAlphaForCoord(fgCoord.x, fgCoord.y, fgImg).color;
+            const fgAlpha = fgOpac * getColorAlphaForCoord(fgCoord.x, fgCoord.y, fgImg).alpha;
     
-            let fgRGB = new RGB8Bit(fgImg.data[fgIndex + 0], fgImg.data[fgIndex + 1], fgImg.data[fgIndex + 2]);
-            let fgAlpha = fgOpac * (fgImg.data[fgIndex + 3] / 255);
-    
-            let blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
-            let blendColor8BitValues = blendColor.get8BitPixelValue();
-    
-            bgImg.data[bgIndex + 0] = blendColor8BitValues.red; 
-            bgImg.data[bgIndex + 1] = blendColor8BitValues.green; 
-            bgImg.data[bgIndex + 2] = blendColor8BitValues.blue;
-            
-            fgIndex += 4;
+            const blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+            const blendColor8BitValues = blendColor.get8BitPixelValue();
+
+            const bgIndex = getIndicesForCoord(bgCoord.x, bgCoord.y, bgImg.width)
+            bgImg.data[bgIndex.red] = blendColor8BitValues.red; 
+            bgImg.data[bgIndex.green] = blendColor8BitValues.green; 
+            bgImg.data[bgIndex.blue] = blendColor8BitValues.blue;
+
+            bgCoord.x++;
+            fgCoord.x++;
         }
-
-        bgIndex += 4;
-        ++xCoord;
-        if(xCoord % bgImg.width === 0){
-            xCoord = 0; 
-            ++yCoord;
-        }
+        bgCoord.x = bgXReset; 
+        fgCoord.x = fgXReset;
+        bgCoord.y++;
+        fgCoord.y++;
     }
+}
+
+function getColorAlphaForCoord(x, y, image) {
+    const i = y * (image.width * 4) + x * 4;
+    const outputColor = new RGB8Bit(image.data[i], image.data[i+1], image.data[i+2]);
+    return {color: outputColor, alpha: image.data[i+3] / 255};
+}
+
+function getIndicesForCoord(x, y, width) {
+    const i = y * (width * 4) + x * 4;
+    return {red : i, green: i+1, blue: i+2 };
 }
 
 function alphaBlend(bgColor, bgAlpha, fgColor, fgAlpha){
@@ -175,8 +183,8 @@ function alphaBlend(bgColor, bgAlpha, fgColor, fgAlpha){
 
     // Alpha Blending (over)
     // outputColor = fgAlpha * fgColor + (1-fgAlpha)*bgAlpha*bgColor
-    let fgPremultColor = fgColor.scalerMultiply(fgAlpha);
-    let bgPremultColor = bgColor.scalerMultiply(bgAlpha).scalerMultiply((1-fgAlpha)); 
+    const fgPremultColor = fgColor.scalerMultiply(fgAlpha);
+    const bgPremultColor = bgColor.scalerMultiply(bgAlpha).scalerMultiply((1-fgAlpha)); 
     outputColor = fgPremultColor.plus(bgPremultColor); 
 
     return outputColor;
@@ -188,7 +196,7 @@ function additiveBlend(bgColor, bgAlpha, fgColor, fgAlpha){
 
     // Additive Blending
     // outputColor = fgAlpha * fgColor + bgColor
-    let fgPremultColor = fgColor.scalerMultiply(fgAlpha)
+    const fgPremultColor = fgColor.scalerMultiply(fgAlpha)
     outputColor = fgPremultColor.plus(bgColor);
 
     return outputColor;
@@ -200,7 +208,7 @@ function differenceBlend(bgColor, bgAlpha, fgColor, fgAlpha){
 
     // Difference Blending
     // outputColor = |fgAlpha * fgColor - bgColor|
-    let fgPremultColor = fgColor.scalerMultiply(fgAlpha) 
+    const fgPremultColor = fgColor.scalerMultiply(fgAlpha) 
     outputColor = fgPremultColor.minus(bgColor).absouluteValue(); 
 
     return outputColor;
@@ -212,8 +220,8 @@ function multiplyBlend(bgColor, bgAlpha, fgColor, fgAlpha){
 
     // Multiply Blending
     // outputColor = fgAlpha * (fgColor * bgColor) + (1 - fgAlpha)*bgColor
-    let fgPremultColor = fgColor.multiply(bgColor).scalerMultiply(fgAlpha);
-    let bgPremultColor = bgColor.scalerMultiply(1-fgAlpha);
+    const fgPremultColor = fgColor.multiply(bgColor).scalerMultiply(fgAlpha);
+    const bgPremultColor = bgColor.scalerMultiply(1-fgAlpha);
     outputColor = fgPremultColor.plus(bgPremultColor); 
 
     return outputColor;
