@@ -12,13 +12,22 @@
 		<div id="canvasdiv" onmousedown="moveBegin(this)" onmouseup="moveEnd(this)" onmouseout="moveEnd(this)" onmousemove="move(this)">
 			<canvas id="canvas">
 		</div>
-			<div id="controldiv">
-				<div id="controlholder">
-					<a id="addimage" href="javascript:addImage()">+</a>
-					<input type="range" min="0" max="100" value="100" id="opac" onchange="opacChange(this)" disabled="true"/>
-					<div id="layers" ondrop="layerDrop()" ondragover="layerDragOver()"></div>
-				</div>
+
+		<div id="controldiv">
+			<div id="controlholder">
+				<a id="addimage" href="javascript:addImage()">+</a>
+				<input type="range" min="0" max="100" value="100" id="opac" onchange="opacChange(this)" disabled="true"/>
+				<select name="blendMode" id="blend-mode" onchange="blendModeChange(this)">
+					<option value="normal">normal</option>
+					<option value="additive">additive</option>
+					<option value="difference">difference</option>
+					<option value="multiple">multiple</option>
+				</select>
+
+				<div id="layers" ondrop="layerDrop()" ondragover="layerDragOver()"></div>
 			</div>
 		</div>
+		
+	</div>
 	</body>
 </html>

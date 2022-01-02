@@ -35,7 +35,7 @@ function recomputeImage()
 		for ( var i=layers.children.length-2; i>=0; --i ) {
 			var c = layers.children[i];
 			if ( c.image ) {
-				composite( image, c.image, c.imageOpac, c.imagePos );
+				composite( image, c.image, c.imageOpac, c.imagePos, c.imageBlend );
 			}
 		}
 		context.putImageData( image, 0, 0 );
@@ -76,6 +76,14 @@ function opacChange(r)
 	}
 }
 
+function blendModeChange(blend){
+	console.log(`blendModeChange: ${blend.value}`); 
+	if(blend.target){
+		blend.target.imageBlend = blend.value;
+		recomputeImage();
+	}
+}
+
 function selectLayer(layer)
 {
 	var layers = document.getElementById('layers');
@@ -83,13 +91,16 @@ function selectLayer(layer)
 		layers.children[i].title = layers.children[i]==layer ? "selected" : "";
 	}
 	var r = document.getElementById('opac');
+	let blend = document.getElementById('blend-mode');
 	var d = document.getElementById('canvasdiv');
 	r.target = layer;
+	blend.target = layer;
 	d.target = null;
 	d.className = "";
 	if ( layer ) {
 		r.value = layer.imageOpac * 100;
 		r.disabled = false;
+		blend.value = layer.imageBlend;
 		if ( layer != layers.lastChild ) {
 			d.target = layer;
 			d.className = "canmove";
@@ -202,6 +213,7 @@ function addImage()
 	d.draggable = true;
 	d.ondragstart = function(){ layerDragStart(); }
 	d.imageOpac = 1;
+	d.imageBlend = 'normal'
 	d.imagePos = { x:0, y:0 };
 	var x = document.createElement("a");
 	x.div = d;

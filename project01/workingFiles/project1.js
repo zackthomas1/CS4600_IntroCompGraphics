@@ -122,7 +122,7 @@ function convertFloatTo8BitPixelValue(inputValue){
  * @param {*} fgOpac opacity of the foreground image.
  * @param {*} fgPos position of the foreground image in pixels. It can be negative and (0,0) means the top-left pixels of the foreground and background are aligned.
  */
-function composite( bgImg, fgImg, fgOpac, fgPos )
+function composite( bgImg, fgImg, fgOpac, fgPos, fgBlend)
 {
     console.log("Background Data Size: ", bgImg.data.length, "Background Data: ",  bgImg.data);
     console.log("Foreground Data Size: ", fgImg.data.length, "Foreground Data: ",  fgImg.data);
@@ -148,8 +148,25 @@ function composite( bgImg, fgImg, fgOpac, fgPos )
 
             const fgRGB = getColorAlphaForCoord(fgCoord.x, fgCoord.y, fgImg).color;
             const fgAlpha = fgOpac * getColorAlphaForCoord(fgCoord.x, fgCoord.y, fgImg).alpha;
-    
-            const blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+
+            let blendColor = new RGB8Bit();
+            switch(fgBlend){
+                case 'normal':
+                    blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+                    break;
+                case 'additive':
+                    blendColor = additiveBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+                    break;
+                case 'difference':
+                    blendColor = differenceBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+                    break;
+                case 'multiple':
+                    blendColor = multiplyBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+                    break;
+                default:
+                    blendColor = alphaBlend(bgRGB, bgAlpha, fgRGB, fgAlpha);
+                    break; 
+            }
             const blendColor8BitValues = blendColor.get8BitPixelValue();
 
             const bgIndex = getIndicesForCoord(bgCoord.x, bgCoord.y, bgImg.width)
