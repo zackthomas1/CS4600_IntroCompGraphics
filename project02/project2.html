@@ -1,0 +1,30 @@
+<doctype html>
+<!-- Copyright 2020, Cem Yuksel, University of Utah -->
+<html>
+	<head>
+		<title>CS 4600 - Project 2</title>
+		<script type="text/javascript" id="includedscript" src="project2.js"></script>
+		<script src="app.js"></script>
+		<link rel="stylesheet" href="style.css">
+	</head>
+
+	<body onMouseMove="MoveUAV()">
+		<img id="shadow" src="imgs/shadow.png"/>
+		<img id="uav" src="imgs/uav.png"/>
+		<img id="propeller0" class="propeller" src="imgs/propeller.png"/>
+		<img id="propeller1" class="propeller" src="imgs/propeller.png"/>
+		<img id="propeller2" class="propeller" src="imgs/propeller.png"/>
+		<img id="propeller3" class="propeller" src="imgs/propeller.png"/>
+		<div id="controls">
+			<table>
+				<tr><th>W / Arrow    Up</th><td>Zoom  in</td></tr>
+				<tr><th>S / Arrow  Down</th><td>Zoom out</td></tr>
+				<tr><th>A / Arrow  Left</th><td>Rotate counter-clockwise</td></tr>
+				<tr><th>D / Arrow Right</th><td>Rotate clockwise</td></tr>
+				<tr><th>Q / Page     Up</th><td>Increase altitude &amp; speed</td></tr>
+				<tr><th>E / Page   Down</th><td>Decrease altitude &amp; speed</td></tr>
+				<tr><th>H</th><td>Show/hide help</td></tr>
+			</table>
+		</div>
+	</body>
+</html>

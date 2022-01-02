@@ -1,0 +1,46 @@
+html {
+	color: #aaa;
+	background-color: #333;
+	font-family: Arial;
+}
+body {
+	background-image: url(ground.jpg);
+    background-size: 1600px;
+	padding: 0;
+	margin: 0;
+}
+#uav, .propeller, #shadow {
+	display: block;
+	position: fixed;
+	cursor: none;
+}
+#uav, #shadow {
+	width: 204px;
+	height: 204px;
+	left: -102px;
+	top: -102px;
+	
+}
+.propeller {
+	width: 100px;
+	height: 100px;
+	left: -50px;
+	top: -50px;
+}
+#controls {
+	position: fixed;
+	background-color: rgba(0,0,0,.5);
+	padding: 1em;
+	top: 1em;
+	left: 1em;
+	font-family: monospace;
+}
+#controls table {
+	color: white;
+}
+#controls th, #controls td {
+	text-align: left;
+}
+#controls td {
+	padding-left: .2em;
+}
