@@ -107,14 +107,6 @@ class RGB8Bit {
     }
 }
 
-function convert8BitPixelValueToFloat(inputValue){
-    return inputValue / 255;
-}
-
-function convertFloatTo8BitPixelValue(inputValue){
-    return Math.ceil(inputValue * 255);
-}
-
 /**
  * Composite foreground and background images
  * @param {*} bgImg background image to be modified.
@@ -124,12 +116,13 @@ function convertFloatTo8BitPixelValue(inputValue){
  */
 function composite( bgImg, fgImg, fgOpac, fgPos, fgBlend)
 {
-    console.log("Background Data Size: ", bgImg.data.length, "Background Data: ",  bgImg.data);
-    console.log("Foreground Data Size: ", fgImg.data.length, "Foreground Data: ",  fgImg.data);
+    // console.log("Background Data Size: ", bgImg.data.length, "Background Data: ",  bgImg.data);
+    // console.log("Foreground Data Size: ", fgImg.data.length, "Foreground Data: ",  fgImg.data);
 
+    // takes fgPos parameter and updates starting coordinate position for background and forground
     let bgCoord = {x : fgPos.x, y : fgPos.y}
     let fgCoord = {x : 0, y : 0}
-    if(fgPos.x < 0){
+    if(fgPos.x < 0){    
         bgCoord.x = 0; 
         fgCoord.x = Math.abs(fgPos.x);
     }
@@ -138,8 +131,8 @@ function composite( bgImg, fgImg, fgOpac, fgPos, fgBlend)
         fgCoord.y = Math.abs(fgPos.y);
     }
 
-    const bgXReset = bgCoord.x;
-    const fgXReset = fgCoord.x 
+    const bgStartingXCoord = bgCoord.x;
+    const fgStartingXCoord = fgCoord.x 
 
     while(fgCoord.y < fgImg.height && bgCoord.y < bgImg.height) {
         while(fgCoord.x < fgImg.width && bgCoord.x < bgImg.width){
@@ -149,6 +142,7 @@ function composite( bgImg, fgImg, fgOpac, fgPos, fgBlend)
             const fgRGB = getColorAlphaForCoord(fgCoord.x, fgCoord.y, fgImg).color;
             const fgAlpha = fgOpac * getColorAlphaForCoord(fgCoord.x, fgCoord.y, fgImg).alpha;
 
+            // select blend mode
             let blendColor = new RGB8Bit();
             switch(fgBlend){
                 case 'normal':
@@ -176,9 +170,10 @@ function composite( bgImg, fgImg, fgOpac, fgPos, fgBlend)
 
             bgCoord.x++;
             fgCoord.x++;
-        }
-        bgCoord.x = bgXReset; 
-        fgCoord.x = fgXReset;
+        } //end of row reached
+
+        bgCoord.x = bgStartingXCoord; 
+        fgCoord.x = fgStartingXCoord;
         bgCoord.y++;
         fgCoord.y++;
     }
