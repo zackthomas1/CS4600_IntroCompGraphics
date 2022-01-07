@@ -9,17 +9,34 @@ var ground = {
 		positionX : 0,
 		positionY : 0,
 	};
+
 document.addEventListener("keydown", KeyDown, false);
 function KeyDown(e)
 {
 	var keyCode = e.key;
 	switch ( e.key ) {
-		case "w": case "ArrowUp"   : uav.scale    *= 1.01; break;
-		case "s": case "ArrowDown" : uav.scale    *= 0.99; break;
-		case "a": case "ArrowLeft" : uav.rotation -= 5;    break;
-		case "d": case "ArrowRight": uav.rotation += 5;    break;
-		case "q": case "PageUp"    : uav.altitude += 1; if ( uav.altitude > 100 ) uav.altitude = 100; break;
-		case "e": case "PageDown"  : uav.altitude -= 1; if ( uav.altitude <   0 ) uav.altitude =   0; break;
+		case "w": case "ArrowUp": 
+			uav.scale *= 1.01; 
+			break;
+		case "s": case "ArrowDown": 
+			uav.scale *= 0.99; 
+			break;
+		case "a": case "ArrowLeft": 
+			uav.rotation -= 5;   
+			break;
+		case "d": case "ArrowRight": 
+			uav.rotation += 5;    
+			break;
+		case "q": case "PageUp": 
+			uav.altitude += 1; 
+			if ( uav.altitude > 100 ) {
+				uav.altitude = 100; }
+				break;
+		case "e": case "PageDown":
+			uav.altitude -= 1; 
+			if ( uav.altitude < 0 ) {
+				uav.altitude = 0; }
+				break;
 		case "h":
 			var d = document.getElementById('controls');
 			d.style.display = d.style.display=="" ? "none" : "";
@@ -36,6 +53,7 @@ function KeyDown(e)
 	}
 	UpdateTrans();
 }
+
 function MoveUAV()
 {
 	uav.positionX = event.clientX;
@@ -45,15 +63,22 @@ function MoveUAV()
 	console.log("UAV Position: (", uav.positionX, ",", uav.positionY, ")", " UAV Rotation: ", uav.rotation, "UAV Scale: ", uav.scale);
 	console.log("Ground Position: (", ground.positionX, ",", ground.positionY, ")");
 }
+
 function UpdateTrans()
 {
+	// shadow display
 	var s = document.getElementById('shadow');
 	var a = uav.altitude * uav.scale;
 	s.style.transform = "translate(" + a + "px," + a + "px) translate(" + uav.positionX + "px," + uav.positionY + "px) rotate(" + uav.rotation + "deg) scale(" + uav.scale + ")";
 	s.style.filter = "blur(" + (uav.altitude*0.5) + "px)";
+
+	// UAV body display
 	var m = GetTransform( uav.positionX, uav.positionY, uav.rotation, uav.scale );
 	var b = document.getElementById('uav');
+	//							scaleX			skewY		skewX		scaleY		translateX		translateY
 	b.style.transform = "matrix(" + m[0] + "," + m[1] + "," + m[3] + "," + m[4] + "," + m[6] + "," + m[7] + ")";
+	
+	// UAV propeller display
 	var offset = Array(
 		{ x:-51, y:-51 },
 		{ x: 51, y:-51 },
@@ -68,11 +93,13 @@ function UpdateTrans()
 		//							scaleX			skewY		skewX		scaleY		translateX		translateY
 		p.style.transform = "matrix(" + t[0] + "," + t[1] + "," + t[3] + "," + t[4] + "," + t[6] + "," + t[7] + ")";
 	}
+
 	var px = uav.positionX + ground.positionX * uav.scale;
 	var py = uav.positionY + ground.positionY * uav.scale;
 	document.body.style.backgroundPosition = px + "px " + py + "px";
 	document.body.style.backgroundSize = (uav.scale * 1600) + "px";
 }
+
 setInterval( function() {
 	var speed = uav.altitude * 0.25;
 	var angle = uav.rotation * Math.PI/180;
