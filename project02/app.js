@@ -59,13 +59,13 @@ function MoveUAV()
 	uav.positionX = event.clientX;
 	uav.positionY = event.clientY;
 	UpdateTrans();
-
-	console.log("UAV Position: (", uav.positionX, ",", uav.positionY, ")", " UAV Rotation: ", uav.rotation, "UAV Scale: ", uav.scale);
-	console.log("Ground Position: (", ground.positionX, ",", ground.positionY, ")");
 }
 
 function UpdateTrans()
 {
+	console.log("UAV Position: (", uav.positionX, ",", uav.positionY, ")", " UAV Rotation: ", uav.rotation, "UAV Scale: ", uav.scale);
+	console.log("Ground Position: (", ground.positionX, ",", ground.positionY, ")");
+
 	// shadow display
 	var s = document.getElementById('shadow');
 	var a = uav.altitude * uav.scale;

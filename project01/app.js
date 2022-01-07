@@ -70,6 +70,7 @@ function move(d)
 
 function opacChange(r)
 {
+	console.log(`opacChange: ${r.value}`); 
 	if ( r.target ) {
 		r.target.imageOpac = r.value / 100;
 		recomputeImage();
