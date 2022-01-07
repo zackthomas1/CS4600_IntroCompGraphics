@@ -65,6 +65,7 @@ function UpdateTrans()
 		var r = Math.random()*360;
 		var t = GetTransform( offset[i].x, offset[i].y, r, 1 );
 		t = ApplyTransform( t, m );
+		//							scaleX			skewY		skewX		scaleY		translateX		translateY
 		p.style.transform = "matrix(" + t[0] + "," + t[1] + "," + t[3] + "," + t[4] + "," + t[6] + "," + t[7] + ")";
 	}
 	var px = uav.positionX + ground.positionX * uav.scale;
