@@ -91,7 +91,7 @@ function selectLayer(layer)
 		layers.children[i].title = layers.children[i]==layer ? "selected" : "";
 	}
 	var r = document.getElementById('opac');
-	let blend = document.getElementById('blend-mode');
+	let blend = document.getElementById('blendMode');
 	var d = document.getElementById('canvasdiv');
 	r.target = layer;
 	blend.target = layer;
