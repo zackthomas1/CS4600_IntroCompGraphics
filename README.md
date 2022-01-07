@@ -12,7 +12,7 @@ Selected foreground image layer can be translated.
 </p>
 
 <h3> Project 2 - Transformations </h3>
-<p> A 2D drone piloting simulation. Project objective to learn about translation matrices in 2D space.</p>
+<p> A 2D drone piloting simulation. Project objective to learn about transformation matrices in 2D space.</p>
 
 <h3> Project 3 - Curves </h3> 
 <p> </p>
