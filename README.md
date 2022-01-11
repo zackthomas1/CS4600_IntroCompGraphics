@@ -11,14 +11,14 @@ Also allows alpha channel adjustments for each foreground layer
 Selected foreground image layer can be translated. 
 </p>
 
-<h3> Project 2 - Transformations </h3>
+<h3> Project 2: Transformations </h3>
 <p> A 2D drone piloting simulation. Project objective to learn about transformation matrices in 2D space.</p>
 
-<h3> Project 3 - Curves </h3> 
+<h3> Project 3: Curves </h3> 
 <p> </p>
 
 <h3> Hello WebGL </h3> 
 <p> Intro to webGL. First complete program.</p>
 
-<h3> Project 6 - Ray Tracing </h3> 
+<h3> Project 6: Ray Tracing </h3> 
 <p> </p>
