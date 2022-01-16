@@ -1,0 +1,319 @@
+<doctype html>
+<!-- Copyright 2020, Cem Yuksel, University of Utah -->
+<html>
+<head>
+<title>CS 4600 - Project 3</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" id="includedscript" src="project3.js"></script>
+
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+// Below is the code for the object that draws lines.
+///////////////////////////////////////////////////////////////////////////////////
+class LineDrawer {
+	constructor()
+	{
+		// Compile the shader program
+		this.prog = InitShaderProgram( linesVS, linesFS );
+		
+		// Get the ids of the uniform variables in the shaders
+		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
+		
+		// Get the ids of the vertex attributes in the shaders
+		this.vertPos = gl.getAttribLocation( this.prog, 'pos' );
+		
+		// Create the vertex buffer object
+		this.buffer = gl.createBuffer();
+		// We are not filling the contents of the buffer here,
+		// because we will put the control points into this buffer.
+	}
+	setViewport( width, height )
+	{
+		// Compute the orthographic projection matrix and send it to the shader
+		var trans = [ 2/width,0,0,0,  0,-2/height,0,0, 0,0,1,0, -1,1,0,1 ];
+		gl.useProgram( this.prog );
+		gl.uniformMatrix4fv( this.mvp, false, trans );
+	}
+	updatePoints( pt )
+	{
+		// The control points have changed, so we must update 
+		// the data in the in the vertex buffer
+		var p = [];
+		for ( var i=0; i<4; ++i ) {
+			var x = pt[i].getAttribute("cx");
+			var y = pt[i].getAttribute("cy");
+			p.push(x);
+			p.push(y);
+		}
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(p), gl.STATIC_DRAW);
+	}
+	draw()
+	{
+		// Draw the line segments
+		gl.useProgram( this.prog );
+		gl.bindBuffer( gl.ARRAY_BUFFER, this.buffer );
+		gl.vertexAttribPointer( this.vertPos, 2, gl.FLOAT, false, 0, 0 );
+		gl.enableVertexAttribArray( this.vertPos );
+		gl.drawArrays( gl.LINE_STRIP, 0, 4 );
+	}
+}
+// Vertex shader source code
+var linesVS = `
+	attribute vec2 pos;
+	uniform mat4 mvp;
+	void main()
+	{
+		gl_Position = mvp * vec4(pos,0,1);
+	}
+`;
+// Fragment shader source code
+var linesFS = `
+	precision mediump float;
+	void main()
+	{
+		gl_FragColor = vec4(0,0,1,1);
+	}
+`;
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+// Below is the core WebGL initialization code.
+///////////////////////////////////////////////////////////////////////////////////
+var lineDrawer;
+var curveDrawer;
+
+// Called once to initialize
+function InitWebGL()
+{
+	// Initialize the WebGL canvas
+	const canvas = document.getElementById("canvas");
+	canvas.oncontextmenu = function() {return false;};
+	gl = canvas.getContext("webgl", {antialias: false, depth: false});	// Initialize the GL context
+	if (!gl) {
+		alert("Unable to initialize WebGL. Your browser or machine may not support it.");
+		return;
+	}
+	
+	// Initialize settings
+	gl.clearColor(1.0, 1.0, 1.0, 0.0);
+	gl.lineWidth(1.0);
+	
+	// Initialize the programs and buffers for drawing
+	lineDrawer  = new LineDrawer();
+	curveDrawer = new CurveDrawer();
+	
+	// Set the viewport size
+	UpdateCanvasSize();
+}
+
+// Called every time the window size is changed.
+function UpdateCanvasSize()
+{
+	const canvas = document.getElementById("canvas");
+	canvas.style.width  = '100%';
+	canvas.style.height = '100%';
+	const pixelRatio = window.devicePixelRatio || 1;
+	canvas.width  = pixelRatio * canvas.clientWidth;
+	canvas.height = pixelRatio * canvas.clientHeight;
+	const width  = (canvas.width  / pixelRatio);
+	const height = (canvas.height / pixelRatio);
+	canvas.style.width  = width  + 'px';
+	canvas.style.height = height + 'px';
+	gl.viewport( 0, 0, canvas.width, canvas.height );
+	
+	// Update the projection matrices using the new viewport size
+	lineDrawer.setViewport( width, height );
+	curveDrawer.setViewport( width, height );
+}
+
+// Called when the control points are modified
+function UpdatePoints()
+{
+	// Update the control point data
+	lineDrawer.updatePoints(pt);
+	curveDrawer.updatePoints(pt);
+}
+
+// This is the main function that handled WebGL drawing
+function DrawScene()
+{
+	// Clear the screen. There is no need to clear the depth buffer, since it does not exist.
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+	// Draw the curve and then the line segments that connect the control points.
+	curveDrawer.draw();
+	lineDrawer.draw();
+}
+
+// This is a helper function for compiling the given vertex and fragment shader source code into a program.
+function InitShaderProgram( vsSource, fsSource )
+{
+	const vs = CompileShader( gl.VERTEX_SHADER,   vsSource );
+	const fs = CompileShader( gl.FRAGMENT_SHADER, fsSource );
+
+	const prog = gl.createProgram();
+	gl.attachShader(prog, vs);
+	gl.attachShader(prog, fs);
+	gl.linkProgram(prog);
+
+	if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+		alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(prog));
+		return null;
+	}
+	return prog;
+}
+
+// This is a helper function for compiling a shader, called by InitShaderProgram().
+function CompileShader( type, source )
+{
+	const shader = gl.createShader(type);
+	gl.shaderSource(shader, source);
+	gl.compileShader(shader);
+	if (!gl.getShaderParameter( shader, gl.COMPILE_STATUS) ) {
+		alert('An error occurred compiling shader:\n' + gl.getShaderInfoLog(shader));
+		gl.deleteShader(shader);
+		return null;
+	}
+	return shader;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+// Below are the main UI control and SVG update functions.
+///////////////////////////////////////////////////////////////////////////////////
+var selPt = null;
+var pt = new Array(4);
+$(document).ready(function() {
+	var w = document.documentElement.clientWidth;
+	var h = document.documentElement.clientHeight;
+	pt[0] = document.getElementById("p0");
+	pt[1] = document.getElementById("p1");
+	pt[2] = document.getElementById("p2");
+	pt[3] = document.getElementById("p3");
+	pt[0].setAttribute("cx", .1*w);
+	pt[0].setAttribute("cy", .4*h);
+	pt[1].setAttribute("cx", .4*w);
+	pt[1].setAttribute("cy", .2*h);
+	pt[2].setAttribute("cx", .5*w);
+	pt[2].setAttribute("cy", .8*h);
+	pt[3].setAttribute("cx", .9*w);
+	pt[3].setAttribute("cy", .6*h);
+	$("circle").on( "mousedown", function( event ) {
+		if ( ! selPt ) selPt = event.target;
+	});
+	$("circle").on( "mouseup", function( event ) {
+		selPt = null;
+	});
+	$(document).on( "mouseleave", function( event ) {
+		selPt = null;
+	});
+	$(document).on( "mousemove", function( event ) {
+		if ( selPt ) {
+			selPt.setAttribute("cx", event.clientX);
+			selPt.setAttribute("cy", event.clientY);
+			UpdateLines();
+			UpdatePoints();
+			DrawScene();
+		}
+	});
+	$(window).on( "resize", function( event ) {
+		UpdateCanvasSize();
+		DrawScene();
+	});
+	UpdateLines();
+	InitWebGL();
+	UpdatePoints();
+	DrawScene();
+});
+function UpdateLines()
+{
+	var line = new Array(3);
+	line[0] = document.getElementById("line0");
+	line[1] = document.getElementById("line1");
+	line[2] = document.getElementById("line2");
+	var x1 = pt[0].getAttribute("cx");
+	var y1 = pt[0].getAttribute("cy");
+	var d = "M" + x1 + "," + y1 + " C";
+	for ( var i=0; i<3; ++i ) {
+		var x2 = pt[i+1].getAttribute("cx");
+		var y2 = pt[i+1].getAttribute("cy");
+		line[i].setAttribute("x1", x1);
+		line[i].setAttribute("y1", y1);
+		line[i].setAttribute("x2", x2);
+		line[i].setAttribute("y2", y2);
+		d += x2 + "," + y2 + " ";
+		x1 = x2;
+		y1 = y2;
+	}
+	var c = document.getElementById("curve");
+	c.setAttribute("d",d);
+}
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<style>
+html {
+	color: black;
+	background-color: white;
+	font-family: Arial;
+	overflow: hidden;
+}
+body {
+	padding: 0;
+	margin: 0;
+}
+canvas, #overlay {
+	display: block;
+	position: fixed;
+	top:  0;
+	left: 0;
+	width:  100%;
+	height: 100%;
+}
+circle {
+	fill: #a00;
+	stroke: black;
+	stroke-width: 1px;
+	r: 5px;
+}
+circle:hover {
+	fill: red;
+	cursor: hand;
+	stroke-width: 2px;
+}
+line {
+	stroke: black;
+	stroke-width: 2px;
+	stroke-dasharray: 2, 20;
+}
+path {
+	stroke: green;
+	stroke-width: 2px;
+	stroke-dasharray: 2, 20;
+	fill: none;
+}
+</style>
+
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<svg id="overlay">
+	<path id="curve" />
+	<g id="lines">
+		<line id="line0" />
+		<line id="line1" />
+		<line id="line2" />
+	</g>
+	<circle id="p0" />
+	<circle id="p1" />
+	<circle id="p2" />
+	<circle id="p3" />
+</svg>
+</body>
+</html>
