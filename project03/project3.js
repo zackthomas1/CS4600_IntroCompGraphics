@@ -6,6 +6,7 @@ class CurveDrawer {
 		this.prog   = InitShaderProgram( curvesVS, curvesFS );
 		// [TO-DO] Other initializations should be done here.
 		// [TO-DO] This is a good place to get the locations of attributes and uniform variables.
+		this.mvp
 		
 		// Initialize the attribute buffer
 		this.steps = 100;
@@ -20,7 +21,12 @@ class CurveDrawer {
 	{
 		// [TO-DO] This is where we should set the transformation matrix.
 		// [TO-DO] Do not forget to bind the program before you set a uniform variable value.
+		let trans = [2/width,0,0,0,	
+					0,-2/height,0,0,	
+					0,0,1,0,
+					-1,1,0,1]
 		gl.useProgram( this.prog );	// Bind the program
+		gl.uniformMatrix4fv(this.mvp, false, trans)
 	}
 	updatePoints( pt )
 	{
