@@ -33,9 +33,9 @@ class CurveDrawer {
 		// [TO-DO] Do not forget to bind the program before you set a uniform variable value.
 		let trans = [
 					2/width,0,0,0,	
-					0,2/height,0,0,	
+					0,-2/height,0,0,	
 					0,0,1,0,
-					-1,0,0,1
+					-1,1,0,1
 				];
 		gl.useProgram( this.prog );	// Bind the program
 		gl.uniformMatrix4fv(this.mvp, false, trans)
@@ -91,9 +91,15 @@ var curvesVS = `
 	void main()
 	{
 		// [TO-DO] Replace the following with the proper vertex shader code
-		float lerp_p0p1_x = (p1.x - p0.x) * t + p0.x;
-		float lerp_p0p1_y = (p1.y - p0.y) * t + p0.y;
-		gl_Position = mvp * vec4(lerp_p0p1_x,lerp_p0p1_y,0,1);
+		float x = pow((1.0 - t),3.0) * p0.x + 
+                        3.0 * pow((1.0 - t),2.0) * t * p1.x + 
+                        3.0 * (1.0 - t) * pow(t,2.0) * p2.x +
+                        pow(t,3.0) * p3.x;
+		float y = pow((1.0 - t),3.0) * p0.y + 
+                        3.0 * pow((1.0 - t),2.0) * t * p1.y + 
+                        3.0 * (1.0 - t) * pow(t,2.0) * p2.y +
+                        pow(t,3.0) * p3.y;
+		gl_Position = mvp * vec4(x, y, 0, 1);
 	}
 `;
 
