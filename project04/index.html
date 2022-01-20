@@ -2,15 +2,18 @@
 <!-- Copyright 2020, Cem Yuksel, University of Utah -->
 <html>
 	<head>
-	<title>CS 4600 - Project 4</title>
+		<title>CS 4600 - Project 4</title>
 		<script type="text/javascript" id="includedscript" src="project4.js"></script>
 		<script type="text/javascript" src="obj.js"></script>
 		<script src="app.js"></script>
 		<link rel="stylesheet" href="style.css">
 	</head>
-	
+
 	<body onresize="WindowResize()">
-		<div id="canvas-div"><canvas id="canvas"></canvas></div><div id="controls-div">
+		<div id="canvas-div">
+			<canvas id="canvas"></canvas>
+		</div>
+		<div id="controls-div">
 			<div id="controls">
 				<div class="control-group">
 					<div class="control">
@@ -30,12 +33,18 @@
 					</div>
 				</div>
 				<div class="control-group">
-					<div class="control">OBJ model:<br/><input id="obj" type="file" onchange="LoadObj(this)" accept=".obj"/></div>
-					<div class="control">Texture image:<br/><input id="texture" type="file" onchange="LoadTexture(this)" accept="image/*"/></div>
+					<div class="control">
+						OBJ model:
+						<input id="obj" type="file" onchange="LoadObj(this)" accept=".obj"/>
+					</div>
+					<div class="control">
+						Texture image:
+						<input id="texture" type="file" onchange="LoadTexture(this)" accept="image/*"/>
+					</div>
 				</div>
 				<div class="control-group">
-				<img id="texture-img" />
-			</div>
+					<img id="texture-img" />
+				</div>
 			</div>
 		</div>
 	</body>
