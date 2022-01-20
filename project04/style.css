@@ -1,0 +1,77 @@
+html {
+	color: white;
+	background-color: black;
+	font-family: Arial;
+	overflow: hidden;
+}
+body {
+	padding: 0;
+	margin: 0;
+}
+input[type=checkbox], label {
+	cursor: hand;
+}
+input[type=range] {
+	width: 100%;
+}
+canvas {
+	display: block;
+	position: absolute;
+	top:  0;
+	left: 0;
+	width:  100%;
+	height: 100%;
+}
+#canvas-div {
+	position: relative;
+}
+#controls-div {
+	vertical-align: top;
+	background-color: #333;
+	overflow: auto;
+}
+#controls {
+	padding: 1em;
+}
+.control {
+	padding: 0.2em;
+}
+@media (orientation: landscape) {
+	#canvas-div {
+		display: inline-block;
+		width:   80%;
+		height: 100%;
+	}
+	#controls-div {
+		display: inline-block;
+		width:   20%;
+		height: 100%;
+	}
+	.control-group {
+		margin-top: 1em;
+		overflow: hidden;
+	}
+	#texture-img {
+		width: 100%;
+		height: auto;
+	}
+}
+@media (orientation: portrait) {
+	#canvas-div {
+		width:  100%;
+		height:  80%;
+	}
+	#controls-div {
+		width:  100%;
+		height:  20%;
+	}
+	.control-group {
+		display: inline-block;
+		vertical-align: top;
+		margin-left: 2em;
+	}
+	#texture-img {
+		width: auto;
+		height: calc( 100% - 2em );
+	}
+}
