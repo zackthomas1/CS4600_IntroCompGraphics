@@ -1,3 +1,33 @@
+
+// Multiplies two matrices and returns the result A*B.
+// The arguments A and B are arrays, representing column-major matrices.
+function MatrixMult( A, B )
+{
+	var C = [];
+	for ( var i=0; i<4; ++i ) {
+		for ( var j=0; j<4; ++j ) {
+			var v = 0;
+			for ( var k=0; k<4; ++k ) {
+				v += A[j+4*k] * B[k+4*i];
+			}
+			if (!isNaN(v)){
+				C.push(v);
+			}
+		}
+	}
+	return C;
+}
+
+function transposeMatrix(matrix){
+	let output = []; 
+	for(let col = 0; col < 4; col++){
+		for(let row = 0; row < 4; row++){
+			output.push(matrix[col + (row * 4)])
+		}
+	}
+	return output;
+}
+
 // This function takes the projection matrix, the translation, and two rotation angles (in radians) as input arguments.
 // The two rotations are applied around x and y axes.
 // It returns the combined 4x4 transformation matrix as an array in column-major order.
@@ -5,14 +35,35 @@
 // You can use the MatrixMult function defined in project4.html to multiply two 4x4 matrices in the same format.
 function GetModelViewProjection( projectionMatrix, translationX, translationY, translationZ, rotationX, rotationY )
 {
-	// [TO-DO] Modify the code below to form the transformation matrix.
-	var trans = [
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		translationX, translationY, translationZ, 1
+
+	// row-major transformation matrices
+	let translate = [
+		1,0,0,translationX,
+		0,1,0,translationY,
+		0,0,1,translationZ,
+		0,0,0,1
 	];
-	var mvp = MatrixMult( projectionMatrix, trans );
+
+	let rotateX = [
+		1,0,0,0,
+		0,Math.cos(rotationX),Math.sin(rotationX),0,
+		0,-Math.sin(rotationX),Math.cos(rotationX),0,
+		0,0,0,1,
+	];
+
+	let rotateY = [
+		Math.cos(rotationY),0, -Math.sin(rotationY),0,
+		0,1,0,0,
+		Math.sin(rotationY),0, Math.cos(rotationY),0,
+		0,0,0,1,
+	];
+
+	// transpose to column-major
+	let rotation = transposeMatrix(MatrixMult(rotateX, rotateY)); 
+	var translation = transposeMatrix(translate); 
+
+	var mvp = MatrixMult( projectionMatrix, MatrixMult(translation, rotation));
+	console.log("mvp: ", mvp);
 	return mvp;
 }
 

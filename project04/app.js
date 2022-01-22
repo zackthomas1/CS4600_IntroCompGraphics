@@ -54,6 +54,7 @@ var boxVS = `
 	uniform mat4 mvp;
 	void main()
 	{
+
 		gl_Position = mvp * vec4(pos,1);
 	}
 `;
@@ -136,6 +137,9 @@ function UpdateProjectionMatrix()
 // This is the main function that handled WebGL drawing
 function DrawScene()
 {
+	console.log("rotate x: ", rotX); 
+	console.log("rotate y: ", rotY); 
+
 	var mvp = GetModelViewProjection( perspectiveMatrix, 0, 0, transZ, rotX, autorot+rotY );
 
 	// Clear the screen and the depth buffer.
@@ -180,22 +184,7 @@ function CompileShader( type, source )
 	return shader;
 }
 
-// Multiplies two matrices and returns the result A*B.
-// The arguments A and B are arrays, representing column-major matrices.
-function MatrixMult( A, B )
-{
-	var C = [];
-	for ( var i=0; i<4; ++i ) {
-		for ( var j=0; j<4; ++j ) {
-			var v = 0;
-			for ( var k=0; k<4; ++k ) {
-				v += A[j+4*k] * B[k+4*i];
-			}
-			C.push(v);
-		}
-	}
-	return C;
-}
+
 
 ///////////////////////////////////////////////////////////////////////////////////
 
