@@ -79,11 +79,20 @@ class MeshDrawer
 		
 		this.mvp = gl.getUniformLocation(this.prog, 'mvp'); 
 
+		this.yzSwap = gl.getUniformLocation(this.prog, 'yzSwap')
+
 		this.vertPos = gl.getAttribLocation(this.prog, 'pos');
 
 		this.vertbuffer = gl.createBuffer(); 
 
 		this.numTriangles = 0;
+
+		this.yz = [
+			1,0,0,0,
+			0,1,0,0,
+			0,0,1,0,
+			0,0,0,1];
+
 
 		// [TO-DO] initializations
 	}
@@ -113,8 +122,29 @@ class MeshDrawer
 	// The argument is a boolean that indicates if the checkbox is checked.
 	swapYZ( swap )
 	{
+
 		// [TO-DO] Set the uniform parameter(s) of the vertex shader
 
+		if(swap){
+			this.yz = MatrixMult(
+				[
+					1,0,0,0,
+					0,-1,0,0,
+					0,0,1,0,
+					0,0,0,1], 
+				[
+					1,0,0,0,
+					0,Math.cos(Math.PI/2),Math.sin(Math.PI/2),0,
+					0,-Math.sin(Math.PI/2),Math.cos(Math.PI/2),0,
+					0,0,0,1,
+				]);
+		}else{
+			this.yz = [
+				1,0,0,0,
+				0,1,0,0,
+				0,0,1,0,
+				0,0,0,1];
+		}
 	}
 	
 	// This method is called to draw the triangular mesh.
@@ -125,6 +155,7 @@ class MeshDrawer
 		// [TO-DO] Complete the WebGL initializations before drawing
 		gl.useProgram(this.prog); 
 		gl.uniformMatrix4fv(this.mvp, false, trans);
+		gl.uniformMatrix4fv(this.yzSwap,false, this.yz); 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer); 
 		gl.vertexAttribPointer(this.vertPos, 3, gl.FLOAT, false, 0, 0); 
 		gl.enableVertexAttribArray( this.vertPos);
@@ -157,9 +188,10 @@ class MeshDrawer
 const meshVS = `
 				attribute vec3 pos; 
 				uniform mat4 mvp; 
+				uniform mat4 yzSwap;
 				void main()
 				{
-					gl_Position = mvp * vec4(pos,1.0); 
+					gl_Position = mvp * yzSwap * vec4(pos,1.0); 
 				}`;
 
 const meshFS = `
