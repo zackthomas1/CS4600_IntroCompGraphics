@@ -137,8 +137,8 @@ function UpdateProjectionMatrix()
 // This is the main function that handled WebGL drawing
 function DrawScene()
 {
-	console.log("rotate x: ", rotX); 
-	console.log("rotate y: ", rotY); 
+	// console.log("rotate x: ", rotX); 
+	// console.log("rotate y: ", rotY); 
 
 	var mvp = GetModelViewProjection( perspectiveMatrix, 0, 0, transZ, rotX, autorot+rotY );
 

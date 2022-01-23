@@ -63,7 +63,7 @@ function GetModelViewProjection( projectionMatrix, translationX, translationY, t
 	var translation = transposeMatrix(translate); 
 
 	var mvp = MatrixMult( projectionMatrix, MatrixMult(translation, rotation));
-	console.log("mvp: ", mvp);
+	// console.log("mvp: ", mvp);
 	return mvp;
 }
 
@@ -75,6 +75,16 @@ class MeshDrawer
 	// The constructor is a good place for taking care of the necessary initializations.
 	constructor()
 	{
+		this.prog = InitShaderProgram(meshVS, meshFS);
+		
+		this.mvp = gl.getUniformLocation(this.prog, 'mvp'); 
+
+		this.vertPos = gl.getAttribLocation(this.prog, 'pos');
+
+		this.vertbuffer = gl.createBuffer(); 
+
+		this.numTriangles = 0;
+
 		// [TO-DO] initializations
 	}
 	
@@ -91,6 +101,10 @@ class MeshDrawer
 	setMesh( vertPos, texCoords )
 	{
 		// [TO-DO] Update the contents of the vertex buffer objects.
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer); 
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW); 
+
 		this.numTriangles = vertPos.length / 3;
 	}
 	
@@ -100,6 +114,7 @@ class MeshDrawer
 	swapYZ( swap )
 	{
 		// [TO-DO] Set the uniform parameter(s) of the vertex shader
+
 	}
 	
 	// This method is called to draw the triangular mesh.
@@ -108,6 +123,11 @@ class MeshDrawer
 	draw( trans )
 	{
 		// [TO-DO] Complete the WebGL initializations before drawing
+		gl.useProgram(this.prog); 
+		gl.uniformMatrix4fv(this.mvp, false, trans);
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer); 
+		gl.vertexAttribPointer(this.vertPos, 3, gl.FLOAT, false, 0, 0); 
+		gl.enableVertexAttribArray( this.vertPos);
 
 		gl.drawArrays( gl.TRIANGLES, 0, this.numTriangles );
 	}
@@ -132,5 +152,20 @@ class MeshDrawer
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify if it should use the texture.
 	}
-	
 }
+
+const meshVS = `
+				attribute vec3 pos; 
+				uniform mat4 mvp; 
+				void main()
+				{
+					gl_Position = mvp * vec4(pos,1.0); 
+				}`;
+
+const meshFS = `
+				precision mediump float; 
+
+				void main()
+				{
+					gl_FragColor =  vec4(1.0, 0.0, 0.0, 1.0);
+				}`;
