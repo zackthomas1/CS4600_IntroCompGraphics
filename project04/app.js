@@ -266,7 +266,7 @@ function SwapYZ( param )
 }
 
 function LoadObj( param )
-{
+{ console.log(param);
 	if ( param.files && param.files[0] ) {
 		var reader = new FileReader();
 		reader.onload = function(e) {
