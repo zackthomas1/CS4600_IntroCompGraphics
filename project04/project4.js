@@ -75,15 +75,17 @@ class MeshDrawer
 	// The constructor is a good place for taking care of the necessary initializations.
 	constructor()
 	{
+
+		// [TO-DO] initializations
 		this.prog = InitShaderProgram(meshVS, meshFS);
 		
 		this.mvp = gl.getUniformLocation(this.prog, 'mvp'); 
-
 		this.yzSwap = gl.getUniformLocation(this.prog, 'yzSwap')
 
 		this.vertPos = gl.getAttribLocation(this.prog, 'pos');
 
 		this.vertbuffer = gl.createBuffer(); 
+		this.texbuffer = gl.createBuffer(); 
 
 		this.numTriangles = 0;
 
@@ -92,9 +94,6 @@ class MeshDrawer
 			0,1,0,0,
 			0,0,1,0,
 			0,0,0,1];
-
-
-		// [TO-DO] initializations
 	}
 	
 	// This method is called every time the user opens an OBJ file.
@@ -110,9 +109,12 @@ class MeshDrawer
 	setMesh( vertPos, texCoords )
 	{
 		// [TO-DO] Update the contents of the vertex buffer objects.
-
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer); 
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW); 
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
+		
+		// 
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.texbuffer); 
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
 		this.numTriangles = vertPos.length / 3;
 	}
@@ -124,7 +126,6 @@ class MeshDrawer
 	{
 
 		// [TO-DO] Set the uniform parameter(s) of the vertex shader
-
 		if(swap){
 			this.yz = MatrixMult(
 				[
@@ -167,13 +168,38 @@ class MeshDrawer
 	// The argument is an HTML IMG element containing the texture data.
 	setTexture( img )
 	{
+		const texture = gl.createTexture();
 		// [TO-DO] Bind the texture
-
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexuture(gl.TEXTURE_2D, texture);
+		
 		// You can set the texture image data using the following command.
 		gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img );
+		gl.generateMimap(gl.TEXTURE_2D);
+
+		// Set texture parameters 
+		gl.texParameteri(
+			gl.TEXTURE_2D, 
+			gl.TEXTURE_MAG_FILTER, 
+			gl.LINEAR
+		);
+		gl.texParameteri(
+			gl.TEXTURE_2D, 
+			gl.TEXTURE_WRAP_S, 
+			gl.REPEAT
+		);
+		gl.texParameteri(
+			gl.TEXTURE_2D, 
+			gl.TEXTURE_WRAP_T, 
+			gl.REPEAT
+		);
+		
 
 		// [TO-DO] Now that we have a texture, it might be a good idea to set
 		// some uniform parameter(s) of the fragment shader, so that it uses the texture.
+		sampler = gl.getUniformLocation(this.prog, 'tex');
+		gl.useProgram(this.prog)
+		gl.uniform1i(sampler,0);
 	}
 	
 	// This method is called when the user changes the state of the
@@ -181,23 +207,106 @@ class MeshDrawer
 	// The argument is a boolean that indicates if the checkbox is checked.
 	showTexture( show )
 	{
+		const attachedShaders = gl.getAttachedShaders(this.prog); 
+		for(let shader of attachedShaders){
+			gl.detachShader(this.prog, shader);
+			gl.deleteShader(shader);
+		}
+
+		let vsShader = null; 
+		let fsShader = null;
+		if(show){
+			vsShader = gl.createShader(gl.VERTEX_SHADER); 
+			gl.shaderSource(vsShader, meshVS); 
+			gl.compileShader(vsShader);
+			if (!gl.getShaderParameter( vsShader, gl.COMPILE_STATUS) ) {
+				alert('An error occurred compiling shader:\n' + gl.getShaderInfoLog(vsShader));
+				gl.deleteShader(vsShader);
+				return null;
+			}
+			fsShader = gl.createShader(gl.FRAGMENT_SHADER); 
+			gl.shaderSource(fsShader, textureFS); 
+			gl.compileShader(fsShader);
+			if (!gl.getShaderParameter( fsShader, gl.COMPILE_STATUS) ) {
+				alert('An error occurred compiling shader:\n' + gl.getShaderInfoLog(fsShader));
+				gl.deleteShader(fsShader);
+				return null;
+			}
+		}
+		else{
+			vsShader = gl.createShader(gl.VERTEX_SHADER); 
+			gl.shaderSource(vsShader, meshVS); 
+			gl.compileShader(vsShader);
+			if (!gl.getShaderParameter( vsShader, gl.COMPILE_STATUS) ) {
+				alert('An error occurred compiling shader:\n' + gl.getShaderInfoLog(vsShader));
+				gl.deleteShader(vsShader);
+				return null;
+			}
+			fsShader = gl.createShader(gl.FRAGMENT_SHADER); 
+			gl.shaderSource(fsShader, meshFS); 
+			gl.compileShader(fsShader);
+			if (!gl.getShaderParameter( fsShader, gl.COMPILE_STATUS) ) {
+				alert('An error occurred compiling shader:\n' + gl.getShaderInfoLog(fsShader));
+				gl.deleteShader(fsShader);
+				return null;
+			}
+		}
+
+		gl.attachShader(this.prog, vsShader); 
+		gl.attachShader(this.prog, fsShader); 
+
+		gl.linkProgram(this.prog);
+
+		if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
+			alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(this.prog));
+			return null;
+		}
+
+		this.mvp = gl.getUniformLocation(this.prog, 'mvp'); 
+		this.yzSwap = gl.getUniformLocation(this.prog, 'yzSwap')
+
+
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify if it should use the texture.
+
+
 	}
 }
 
 const meshVS = `
+			attribute vec3 pos; 
+			uniform mat4 mvp; 
+			uniform mat4 yzSwap;
+
+			void main()
+			{
+				gl_Position = mvp * yzSwap * vec4(pos,1.0); 
+			}`;
+
+const meshFS = `
+			precision mediump float;
+
+			void main()
+			{
+				gl_FragColor =  vec4(1.0, 0.0, 0.0, 1.0);
+			}`;
+
+const textureVS = `
 				attribute vec3 pos; 
 				uniform mat4 mvp; 
-				uniform mat4 yzSwap;
-				void main()
-				{
+				uniform mat4 yzSwap; 
+
+				attribute vec2 txc; 
+				varying vec2 texCoord; 
+
+				void main(){
+					texCoord = txc;
 					gl_Position = mvp * yzSwap * vec4(pos,1.0); 
 				}`;
 
-const meshFS = `
+const textureFS = `
 				precision mediump float; 
 
 				void main()
 				{
-					gl_FragColor =  vec4(1.0, 0.0, 0.0, 1.0);
-				}`;
+					gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+				}`

@@ -254,6 +254,7 @@ function AutoRotate( param )
 
 function ShowTexture( param )
 {
+	console.log("Show texture: ", param.checked);
 	meshDrawer.showTexture( param.checked );
 	DrawScene();
 }
