@@ -83,6 +83,7 @@ class MeshDrawer
 		this.yzSwapLoc = gl.getUniformLocation(this.prog, 'yzSwap');
 		this.showTexLoc = gl.getUniformLocation(this.prog, 'showTex'); 
 		this.showNormalLoc = gl.getUniformLocation(this.prog, 'showNormals');
+		this.colorLoc = gl.getUniformLocation(this.prog, 'color');
 
 		this.vertPosLoc = gl.getAttribLocation(this.prog, 'pos');
 		this.texCoordLoc = gl.getAttribLocation(this.prog, 'texCoord');
@@ -231,6 +232,13 @@ class MeshDrawer
 		gl.useProgram(this.prog); 
 		gl.uniform1i(this.showNormalLoc, show); 
 	}
+
+
+	updateColor(rgb){
+		gl.useProgram(this.prog); 
+		gl.uniform3f(this.colorLoc, rgb.r/255, rgb.g/255, rgb.b/255);
+
+	}
 }
 
 const meshVS = `
@@ -258,6 +266,7 @@ const meshFS = `
 			uniform bool showTex;
 			uniform bool showNormals;
 			uniform sampler2D tex;
+			uniform vec3 color; 
 
 			varying vec2 v_texCoord;
 			varying vec3 v_normal;
@@ -278,7 +287,7 @@ const meshFS = `
 				}else if(showNormals){
 					gl_FragColor =  vec4(v_normal.x, v_normal.y, v_normal.z, 1.0);
 				}else{
-					gl_FragColor =  vec4(1.0, 0.0, 0.0, 1.0);
+					gl_FragColor =  vec4(color.x, color.y, color.z, 1.0);
 				}
 			}`;
 
