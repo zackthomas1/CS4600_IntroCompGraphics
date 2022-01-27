@@ -79,18 +79,21 @@ class MeshDrawer
 		// [TO-DO] initializations
 		this.prog = InitShaderProgram(meshVS, meshFS);
 		
-		this.mvp = gl.getUniformLocation(this.prog, 'mvp'); 
-		this.yzSwap = gl.getUniformLocation(this.prog, 'yzSwap');
-		this.showTex = gl.getUniformLocation(this.prog, 'showTex'); 
+		this.mvpLoc = gl.getUniformLocation(this.prog, 'mvp'); 
+		this.yzSwapLoc = gl.getUniformLocation(this.prog, 'yzSwap');
+		this.showTexLoc = gl.getUniformLocation(this.prog, 'showTex'); 
+		this.showNormalLoc = gl.getUniformLocation(this.prog, 'showNormals');
 
-		this.vertPos = gl.getAttribLocation(this.prog, 'pos');
-		this.texCoord = gl.getAttribLocation(this.prog, 'txc');
+		this.vertPosLoc = gl.getAttribLocation(this.prog, 'pos');
+		this.texCoordLoc = gl.getAttribLocation(this.prog, 'texCoord');
+		this.normalLoc = gl.getAttribLocation(this.prog, 'normal');
 
 		this.vertbuffer = gl.createBuffer(); 
 		this.texbuffer = gl.createBuffer(); 
+		this.normalbuffer = gl.createBuffer();
 
 		this.numTriangles = 0;
-
+		
 		this.yz = [
 			1,0,0,0,
 			0,1,0,0,
@@ -108,15 +111,19 @@ class MeshDrawer
 	// Similarly, every two consecutive elements in the texCoords array
 	// form the texture coordinate of a vertex.
 	// Note that this method can be called multiple times.
-	setMesh( vertPos, texCoords )
+	setMesh( vertPos, texCoords, normalDirs )
 	{
 		// [TO-DO] Update the contents of the vertex buffer objects.
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer); 
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
 		
-		// 
+		// update texture coordinates
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.texbuffer); 
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
+
+		// update normal directions
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalbuffer); 
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalDirs), gl.STATIC_DRAW);
 
 		this.numTriangles = vertPos.length / 3;
 	}
@@ -156,17 +163,22 @@ class MeshDrawer
 	{
 		// [TO-DO] Complete the WebGL initializations before drawing
 		gl.useProgram(this.prog); 
-		gl.uniformMatrix4fv(this.mvp, false, trans);
-		gl.uniformMatrix4fv(this.yzSwap,false, this.yz); 
+
+		gl.uniformMatrix4fv(this.mvpLoc, false, trans);
+		gl.uniformMatrix4fv(this.yzSwapLoc,false, this.yz); 
 		
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer); 
-		gl.vertexAttribPointer(this.vertPos, 3, gl.FLOAT, false, 0, 0); 
-		gl.enableVertexAttribArray( this.vertPos);
+		gl.enableVertexAttribArray( this.vertPosLoc);
+		gl.vertexAttribPointer(this.vertPosLoc, 3, gl.FLOAT, false, 0, 0); 
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.texbuffer); 
-		gl.enableVertexAttribArray(this.texCoord);
-		gl.vertexAttribPointer(this.texCoord, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.texCoordLoc);
+		gl.vertexAttribPointer(this.texCoordLoc, 2, gl.FLOAT, false, 0, 0);
  
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalbuffer); 
+		gl.enableVertexAttribArray(this.normalLoc);
+		gl.vertexAttribPointer(this.normalLoc, 3, gl.FLOAT, false, 0, 0); 
+
 		gl.drawArrays( gl.TRIANGLES, 0, this.numTriangles );
 	}
 	
@@ -210,23 +222,33 @@ class MeshDrawer
 	showTexture( show )
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify if it should use the texture.
-		gl.useProgram(this.prog)
-		gl.uniform1i(this.showTex, show); 
+		gl.useProgram(this.prog);
+		gl.uniform1i(this.showTexLoc, show); 
+	}
+
+	showNormals( show )
+	{
+		gl.useProgram(this.prog); 
+		gl.uniform1i(this.showNormalLoc, show); 
 	}
 }
 
 const meshVS = `
 			attribute vec3 pos; 
-			attribute vec2 txc; 
+			attribute vec2 texCoord; 
+			attribute vec3 normal;
 
 			uniform mat4 mvp; 
 			uniform mat4 yzSwap;
 
-			varying vec2 texCoord; 
+			varying vec2 v_texCoord; 
+			varying vec3 v_normal; 
 
 			void main()
 			{
-				texCoord = txc;
+				v_texCoord = texCoord;
+				v_normal = normal;
+
 				gl_Position = mvp * yzSwap * vec4(pos,1.0); 
 			}`;
 
@@ -234,14 +256,27 @@ const meshFS = `
 			precision mediump float;
 
 			uniform bool showTex;
+			uniform bool showNormals;
 			uniform sampler2D tex;
 
-			varying vec2 texCoord;
+			varying vec2 v_texCoord;
+			varying vec3 v_normal;
 
 			void main()
 			{
-				if (showTex){
-					gl_FragColor = texture2D(tex, texCoord);
+				if(showTex && showNormals){
+					vec4 texColor = texture2D(tex, v_texCoord);  
+					gl_FragColor =  vec4(
+							v_normal.x * texColor.x, 
+							v_normal.y * texColor.y, 
+							v_normal.z * texColor.z,
+							1.0
+						);
+				}
+				else if(showTex){
+					gl_FragColor = texture2D(tex, v_texCoord);
+				}else if(showNormals){
+					gl_FragColor =  vec4(v_normal.x, v_normal.y, v_normal.z, 1.0);
 				}else{
 					gl_FragColor =  vec4(1.0, 0.0, 0.0, 1.0);
 				}
