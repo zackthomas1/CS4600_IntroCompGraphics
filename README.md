@@ -15,10 +15,13 @@ Selected foreground image layer can be translated.
 <p> A 2D drone piloting simulation. Project objective to learn about transformation matrices in 2D space.</p>
 
 <h3> Project 3: Curves </h3> 
-<p> </p>
+<p> WebGL based interactive quadratic bezier spline.</p>
 
 <h3> Hello WebGL </h3> 
 <p> Intro to webGL. First complete program.</p>
+
+<h3> Project 4: Triangles </h3> 
+<p> An .obj model viewer useing WebGL. View 3D models with textures. Option to display vertex normals. No lighting</p>
 
 <h3> Project 6: Ray Tracing </h3> 
 <p> </p>
