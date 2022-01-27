@@ -21,7 +21,7 @@ Selected foreground image layer can be translated.
 <p> Intro to webGL. First complete program.</p>
 
 <h3> Project 4: Triangles </h3> 
-<p> An .obj model viewer useing WebGL. View 3D models with textures. Option to display vertex normals. No lighting</p>
+<p> A .obj model viewer using WebGL. View 3D models with textures. Option to display vertex normals. No lighting.</p>
 
 <h3> Project 6: Ray Tracing </h3> 
 <p> </p>
