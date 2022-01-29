@@ -1,0 +1,668 @@
+<doctype html>
+<!-- Copyright 2020, Cem Yuksel, University of Utah -->
+<html>
+<head>
+<title>CS 4600 - Project 5</title>
+<script type="text/javascript" id="includedscript" src="project5.js"></script>
+<script type="text/javascript" src="obj.js"></script>
+
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+// Below is the code for the object that draws lines.
+///////////////////////////////////////////////////////////////////////////////////
+class BoxDrawer {
+	constructor()
+	{
+		// Compile the shader program
+		this.prog = InitShaderProgram( boxVS, boxFS );
+		
+		// Get the ids of the uniform variables in the shaders
+		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
+		
+		// Get the ids of the vertex attributes in the shaders
+		this.vertPos = gl.getAttribLocation( this.prog, 'pos' );
+		
+		// Create the buffer objects
+		
+		this.vertbuffer = gl.createBuffer();
+		var pos = [
+			-1, -1, -1,
+			-1, -1,  1,
+			-1,  1, -1,
+			-1,  1,  1,
+			 1, -1, -1,
+			 1, -1,  1,
+			 1,  1, -1,
+			 1,  1,  1 ];
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
+
+		this.linebuffer = gl.createBuffer();
+		var line = [
+			0,1,   1,3,   3,2,   2,0,
+			4,5,   5,7,   7,6,   6,4,
+			0,4,   1,5,   3,7,   2,6 ];
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.linebuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(line), gl.STATIC_DRAW);
+	}
+	draw( trans )
+	{
+		// Draw the line segments
+		gl.useProgram( this.prog );
+		gl.uniformMatrix4fv( this.mvp, false, trans );
+		gl.bindBuffer( gl.ARRAY_BUFFER, this.vertbuffer );
+		gl.vertexAttribPointer( this.vertPos, 3, gl.FLOAT, false, 0, 0 );
+		gl.enableVertexAttribArray( this.vertPos );
+		gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, this.linebuffer );
+		gl.drawElements( gl.LINES, 24, gl.UNSIGNED_BYTE, 0 );
+	}
+}
+// Vertex shader source code
+var boxVS = `
+	attribute vec3 pos;
+	uniform mat4 mvp;
+	void main()
+	{
+		gl_Position = mvp * vec4(pos,1);
+	}
+`;
+// Fragment shader source code
+var boxFS = `
+	precision mediump float;
+	void main()
+	{
+		gl_FragColor = vec4(1,1,1,1);
+	}
+`;
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+// Below is the core WebGL initialization code.
+///////////////////////////////////////////////////////////////////////////////////
+var boxDrawer;
+var meshDrawer;
+var canvas, gl;
+var perspectiveMatrix;	// perspective projection matrix
+var rotX=0, rotY=0, transZ=3, autorot=0;
+
+// Called once to initialize
+function InitWebGL()
+{
+	// Initialize the WebGL canvas
+	canvas = document.getElementById("canvas");
+	canvas.oncontextmenu = function() {return false;};
+	gl = canvas.getContext("webgl", {antialias: false, depth: true});	// Initialize the GL context
+	if (!gl) {
+		alert("Unable to initialize WebGL. Your browser or machine may not support it.");
+		return;
+	}
+	
+	// Initialize settings
+	gl.clearColor(0,0,0,0);
+	gl.enable(gl.DEPTH_TEST);
+	
+	// Initialize the programs and buffers for drawing
+	boxDrawer  = new BoxDrawer();
+	meshDrawer = new MeshDrawer();
+	
+	// Set the viewport size
+	UpdateCanvasSize();
+}
+
+// Called every time the window size is changed.
+function UpdateCanvasSize()
+{
+	canvas.style.width  = "100%";
+	canvas.style.height = "100%";
+	const pixelRatio = window.devicePixelRatio || 1;
+	canvas.width  = pixelRatio * canvas.clientWidth;
+	canvas.height = pixelRatio * canvas.clientHeight;
+	const width  = (canvas.width  / pixelRatio);
+	const height = (canvas.height / pixelRatio);
+	canvas.style.width  = width  + 'px';
+	canvas.style.height = height + 'px';
+	gl.viewport( 0, 0, canvas.width, canvas.height );
+	UpdateProjectionMatrix();
+}
+
+function ProjectionMatrix( c, z, fov_angle=60 )
+{
+	var r = c.width / c.height;
+	var n = (z - 1.74);
+	const min_n = 0.001;
+	if ( n < min_n ) n = min_n;
+	var f = (z + 1.74);;
+	var fov = 3.145 * fov_angle / 180;
+	var s = 1 / Math.tan( fov/2 );
+	return [
+		s/r, 0, 0, 0,
+		0, s, 0, 0,
+		0, 0, (n+f)/(f-n), 1,
+		0, 0, -2*n*f/(f-n), 0
+	];
+}
+
+function UpdateProjectionMatrix()
+{
+	perspectiveMatrix = ProjectionMatrix( canvas, transZ );
+}
+
+// This is the main function that handled WebGL drawing
+function DrawScene()
+{
+	var mv  = GetModelViewMatrix( 0, 0, transZ, rotX, autorot+rotY );
+	var mvp = MatrixMult( perspectiveMatrix, mv );
+
+	// Clear the screen and the depth buffer.
+	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+	
+	// Draw the curve and then the line segments that connect the control points.
+	var nrmTrans = [ mv[0],mv[1],mv[2], mv[4],mv[5],mv[6], mv[8],mv[9],mv[10] ];
+	meshDrawer.draw( mvp, mv, nrmTrans );
+	if ( showBox.checked ) {
+		boxDrawer.draw( mvp );
+	}
+}
+
+// This is a helper function for compiling the given vertex and fragment shader source code into a program.
+function InitShaderProgram( vsSource, fsSource, wgl=gl )
+{
+	const vs = CompileShader( wgl.VERTEX_SHADER,   vsSource, wgl );
+	const fs = CompileShader( wgl.FRAGMENT_SHADER, fsSource, wgl );
+
+	const prog = wgl.createProgram();
+	wgl.attachShader(prog, vs);
+	wgl.attachShader(prog, fs);
+	wgl.linkProgram(prog);
+
+	if (!wgl.getProgramParameter(prog, wgl.LINK_STATUS)) {
+		alert('Unable to initialize the shader program: ' + wgl.getProgramInfoLog(prog));
+		return null;
+	}
+	return prog;
+}
+
+// This is a helper function for compiling a shader, called by InitShaderProgram().
+function CompileShader( type, source, wgl=gl )
+{
+	const shader = wgl.createShader(type);
+	wgl.shaderSource(shader, source);
+	wgl.compileShader(shader);
+	if (!wgl.getShaderParameter( shader, wgl.COMPILE_STATUS) ) {
+		alert('An error occurred compiling shader:\n' + wgl.getShaderInfoLog(shader));
+		wgl.deleteShader(shader);
+		return null;
+	}
+	return shader;
+}
+
+// Multiplies two matrices and returns the result A*B.
+// The arguments A and B are arrays, representing column-major matrices.
+function MatrixMult( A, B )
+{
+	var C = [];
+	for ( var i=0; i<4; ++i ) {
+		for ( var j=0; j<4; ++j ) {
+			var v = 0;
+			for ( var k=0; k<4; ++k ) {
+				v += A[j+4*k] * B[k+4*i];
+			}
+			C.push(v);
+		}
+	}
+	return C;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+// Below is the light view control code
+///////////////////////////////////////////////////////////////////////////////////
+
+var lightView;
+
+class LightView
+{
+	constructor()
+	{
+		this.canvas = document.getElementById("lightcontrol");
+		this.canvas.oncontextmenu = function() {return false;};
+		this.gl = this.canvas.getContext("webgl", {antialias: false, depth: true});	// Initialize the GL context
+		if (!this.gl) {
+			alert("Unable to initialize WebGL. Your browser or machine may not support it.");
+			return;
+		}
+		
+		// Initialize settings
+		this.gl.clearColor(0.33,0.33,0.33,0);
+		this.gl.enable(gl.DEPTH_TEST);
+		
+		this.rotX = 0;
+		this.rotY = 0;
+		this.posZ = 5;
+		
+		this.resCircle = 32;
+		this.resArrow = 16;
+		this.buffer = this.gl.createBuffer();
+		var data = [];
+		for ( var i=0; i<=this.resCircle; ++i ) {
+			var a = 2 * Math.PI * i / this.resCircle;
+			var x = Math.cos(a);
+			var y = Math.sin(a);
+			data.push( x * .9 );
+			data.push( y * .9 );
+			data.push( 0 );
+			data.push( x );
+			data.push( y );
+			data.push( 0 );
+		}
+		for ( var i=0; i<=this.resCircle; ++i ) {
+			var a = 2 * Math.PI * i / this.resCircle;
+			var x = Math.cos(a);
+			var y = Math.sin(a);
+			data.push( x );
+			data.push( y );
+			data.push( -.05 );
+			data.push( x );
+			data.push( y );
+			data.push( 0.05 );
+		}
+		for ( var i=0; i<=this.resArrow; ++i ) {
+			var a = 2 * Math.PI * i / this.resArrow;
+			var x = Math.cos(a) * .07;
+			var y = Math.sin(a) * .07;
+			data.push( x );
+			data.push( y );
+			data.push( -1 );
+			data.push( x );
+			data.push( y );
+			data.push( 0 );
+		}
+		data.push( 0 );
+		data.push( 0 );
+		data.push( -1.2 );
+		for ( var i=0; i<=this.resArrow; ++i ) {
+			var a = 2 * Math.PI * i / this.resArrow;
+			var x = Math.cos(a) * .15;
+			var y = Math.sin(a) * .15;
+			data.push( x );
+			data.push( y );
+			data.push( -0.9 );
+		}
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
+		
+		// Set the viewport size
+		this.canvas.style.width  = "";
+		this.canvas.style.height = "";
+		const pixelRatio = window.devicePixelRatio || 1;
+		this.canvas.width  = pixelRatio * this.canvas.clientWidth;
+		this.canvas.height = pixelRatio * this.canvas.clientHeight;
+		const width  = (this.canvas.width  / pixelRatio);
+		const height = (this.canvas.height / pixelRatio);
+		this.canvas.style.width  = width  + 'px';
+		this.canvas.style.height = height + 'px';
+		this.gl.viewport( 0, 0, this.canvas.width, this.canvas.height );
+		this.proj = ProjectionMatrix( this.canvas, this.posZ, 30 );
+		
+		// Compile the shader program
+		this.prog = InitShaderProgram( lightViewVS, lightViewFS, this.gl );
+		this.mvp = this.gl.getUniformLocation( this.prog, 'mvp' );
+		this.clr1 = this.gl.getUniformLocation( this.prog, 'clr1' );
+		this.clr2 = this.gl.getUniformLocation( this.prog, 'clr2' );
+		this.vertPos = this.gl.getAttribLocation( this.prog, 'pos' );
+		
+		this.draw();
+		this.updateLightDir();
+		
+		this.canvas.onmousedown = function() {
+			var cx = event.clientX;
+			var cy = event.clientY;
+			lightView.canvas.onmousemove = function() {
+				lightView.rotY += (cx - event.clientX)/lightView.canvas.width*5;
+				lightView.rotX += (cy - event.clientY)/lightView.canvas.height*5;
+				cx = event.clientX;
+				cy = event.clientY;
+				lightView.draw();
+				lightView.updateLightDir();
+			}
+		}
+		this.canvas.onmouseup = this.canvas.onmouseleave = function() {
+			lightView.canvas.onmousemove = null;
+		}
+	}
+	
+	updateLightDir()
+	{
+		var cy = Math.cos( this.rotY );
+		var sy = Math.sin( this.rotY );
+		var cx = Math.cos( this.rotX );
+		var sx = Math.sin( this.rotX );
+		meshDrawer.setLightDir( -sy, cy*sx, -cy*cx );
+		DrawScene();
+	}
+	
+	draw()
+	{
+		// Clear the screen and the depth buffer.
+		this.gl.clear( this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT );
+		
+		this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.buffer );
+		this.gl.vertexAttribPointer( this.vertPos, 3, this.gl.FLOAT, false, 0, 0 );
+		this.gl.enableVertexAttribArray( this.buffer );
+
+		this.gl.useProgram( this.prog );
+		var mvp = MatrixMult( this.proj, [ 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,this.posZ,1 ] );
+		this.gl.uniformMatrix4fv( this.mvp, false, mvp );
+		this.gl.uniform3f( this.clr1, 0.6,0.6,0.6 );
+		this.gl.uniform3f( this.clr2, 0,0,0 );
+		this.gl.drawArrays( this.gl.TRIANGLE_STRIP, 0, this.resCircle*2+2 );
+
+		var mv  = GetModelViewMatrix( 0, 0, this.posZ, this.rotX, this.rotY );
+		var mvp = MatrixMult( this.proj, mv );
+		this.gl.uniformMatrix4fv( this.mvp, false, mvp );
+		this.gl.uniform3f( this.clr1, 1,1,1 );
+		this.gl.drawArrays( this.gl.TRIANGLE_STRIP, 0, this.resCircle*2+2 );
+		this.gl.drawArrays( this.gl.TRIANGLE_STRIP, this.resCircle*2+2, this.resCircle*2+2 );
+		this.gl.uniform3f( this.clr1, 0,0,0 );
+		this.gl.uniform3f( this.clr2, 1,1,1 );
+		this.gl.drawArrays( this.gl.TRIANGLE_STRIP, this.resCircle*4+4, this.resArrow*2+2 );
+		this.gl.drawArrays( this.gl.TRIANGLE_FAN, this.resCircle*4+4 + this.resArrow*2+2, this.resArrow+2 );
+	}
+}
+
+// Vertex shader source code
+const lightViewVS = `
+	attribute vec3 pos;
+	uniform mat4 mvp;
+	void main()
+	{
+		gl_Position = mvp * vec4(pos,1);
+	}
+`;
+// Fragment shader source code
+var lightViewFS = `
+	precision mediump float;
+	uniform vec3 clr1;
+	uniform vec3 clr2;
+	void main()
+	{
+		gl_FragColor = gl_FrontFacing ? vec4(clr1,1) : vec4(clr2,1);
+	}
+`;
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+// Below are the main UI control and SVG update functions.
+///////////////////////////////////////////////////////////////////////////////////
+
+var showBox;
+
+window.onload = function() {
+	showBox = document.getElementById('show-box');
+	InitWebGL();
+	lightView = new LightView();
+	canvas.zoom = function( s ) {
+		transZ *= s/canvas.height + 1;
+		UpdateProjectionMatrix();
+		DrawScene();
+	}
+	canvas.onwheel = function() { canvas.zoom(0.3*event.deltaY); }
+	canvas.onmousedown = function() {
+		var cx = event.clientX;
+		var cy = event.clientY;
+		if ( event.ctrlKey ) {
+			canvas.onmousemove = function() {
+				canvas.zoom(5*(event.clientY - cy));
+				cy = event.clientY;
+			}
+		} else {
+			canvas.onmousemove = function() {
+				rotY += (cx - event.clientX)/canvas.width*5;
+				rotX += (cy - event.clientY)/canvas.height*5;
+				cx = event.clientX;
+				cy = event.clientY;
+				UpdateProjectionMatrix();
+				DrawScene();
+			}
+		}
+	}
+	canvas.onmouseup = canvas.onmouseleave = function() {
+		canvas.onmousemove = null;
+	}
+	
+	SetShininess( document.getElementById('shininess-exp') );
+	
+	DrawScene();
+};
+function WindowResize()
+{
+	UpdateCanvasSize();
+	DrawScene();
+}
+
+var timer;
+function AutoRotate( param )
+{
+	if ( param.checked ) {
+		timer = setInterval( function() {
+				var v = document.getElementById('rotation-speed').value;
+				autorot += 0.0005 * v;
+				if ( autorot > 2*Math.PI ) autorot -= 2*Math.PI;
+				DrawScene();
+			}, 30
+		);
+		document.getElementById('rotation-speed').disabled = false;
+	} else {
+		clearInterval( timer );
+		document.getElementById('rotation-speed').disabled = true;
+	}
+}
+
+function ShowTexture( param )
+{
+	meshDrawer.showTexture( param.checked );
+	DrawScene();
+}
+
+function SwapYZ( param )
+{
+	meshDrawer.swapYZ( param.checked );
+	DrawScene();
+}
+
+function LoadObj( param )
+{
+	if ( param.files && param.files[0] ) {
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			var mesh = new ObjMesh;
+			mesh.parse( e.target.result );
+			var box = mesh.getBoundingBox();
+			var shift = [
+				-(box.min[0]+box.max[0])/2,
+				-(box.min[1]+box.max[1])/2,
+				-(box.min[2]+box.max[2])/2
+			];
+			var size = [
+				(box.max[0]-box.min[0])/2,
+				(box.max[1]-box.min[1])/2,
+				(box.max[2]-box.min[2])/2
+			];
+			var maxSize = Math.max( size[0], size[1], size[2] );
+			var scale = 1/maxSize;
+			mesh.shiftAndScale( shift, scale );
+			var buffers = mesh.getVertexBuffers();
+			meshDrawer.setMesh( buffers.positionBuffer, buffers.texCoordBuffer, buffers.normalBuffer );
+			DrawScene();
+		}
+		reader.readAsText( param.files[0] );
+	}
+}
+
+function LoadTexture( param )
+{
+	if ( param.files && param.files[0] ) {
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			var img = document.getElementById('texture-img');
+			img.onload = function() {
+				meshDrawer.setTexture( img );
+				DrawScene();
+			}
+			img.src = e.target.result;
+		};
+		reader.readAsDataURL( param.files[0] );
+	}
+}
+
+function SetShininess( param )
+{
+	var exp = param.value;
+	var s = Math.pow(10,exp/25);
+	document.getElementById('shininess-value').innerText = s.toFixed( s < 10 ? 2 : 0 );
+	meshDrawer.setShininess(s);
+	DrawScene();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<style>
+html {
+	color: white;
+	background-color: black;
+	font-family: Arial;
+	overflow: hidden;
+}
+body {
+	padding: 0;
+	margin: 0;
+}
+input[type=checkbox], label {
+	cursor: hand;
+}
+input[type=range] {
+	width: 100%;
+}
+#canvas {
+	display: block;
+	position: absolute;
+	top:  0;
+	left: 0;
+	width:  100%;
+	height: 100%;
+}
+#canvas-div {
+	position: relative;
+}
+#controls-div {
+	vertical-align: top;
+	background-color: #333;
+	overflow: auto;
+}
+#controls {
+	padding: 1em;
+}
+.control-group {
+	position: relative;
+	max-width: 12em;
+}
+.control {
+	padding: 0.2em;
+}
+#lightcontrol {
+	width:  12em;
+	height: 12em;
+	background-color: black;
+	outline: 1px solid white;
+	outline-offset: -1px;
+}
+#lightcontrol-label {
+	position: absolute;
+	top: 0.2em;
+	left: 0.2em;
+	pointer-events: none;
+}
+#shininess-label {
+	float: left;
+}
+#shininess-value {
+	float: right;
+	text-align: right;
+	width: 4em;
+}
+@media (orientation: landscape) {
+	#canvas-div {
+		display: inline-block;
+		width:  calc(100% - 14em);
+		height: 100%;
+	}
+	#controls-div {
+		display: inline-block;
+		width:   14em;
+		height: 100%;
+	}
+	.control-group {
+		margin-top: 1em;
+		overflow: hidden;
+	}
+	#texture-img {
+		width: 100%;
+		height: auto;
+	}
+}
+@media (orientation: portrait) {
+	#canvas-div {
+		width:  100%;
+		height: calc(100% - 14em);
+	}
+	#controls-div {
+		width:  100%;
+		height: 14em;
+	}
+	.control-group {
+		display: inline-block;
+		vertical-align: top;
+		margin-left: 2em;
+	}
+	#texture-img {
+		width: auto;
+		height: calc( 100% - 2em );
+	}
+}
+</style>
+
+</head>
+<body onresize="WindowResize()">
+<div id="canvas-div"><canvas id="canvas"></canvas></div><div id="controls-div">
+<div id="controls">
+<div class="control-group"><canvas id="lightcontrol"></canvas><div id="lightcontrol-label">Light Direction</div></div>
+<div class="control-group">
+<div class="control"><input id="show-box" name="show-box" type="checkbox" onchange="DrawScene()" checked /><label for="show-box"> Show Box</label></div>
+<div class="control"><input id="show-texture" name="show-texture" type="checkbox" onchange="ShowTexture(this)" checked /><label for="show-texture"> Show Texture</label></div>
+<div class="control"><input id="swap-yz" name="swap-yz" type="checkbox" onchange="SwapYZ(this)" /><label for="swap-yz"> Swap Y-Z Axes</label></div>
+<div class="control"><input id="auto-rotate" name="auto-rotate" type="checkbox" onchange="AutoRotate(this)"/><label for="auto-rotate"> Auto Rotation</label></div>
+<div class="control"><input id="rotation-speed" type="range" min="1" max="100" value="50" disabled/></div>
+<div class="control"><span id="shininess-label">Shininess:</span><span id="shininess-value">1</span><input id="shininess-exp" type="range" min="0" max="100" value="50" oninput="SetShininess(this)"/></div>
+</div>
+<div class="control-group">
+<div class="control">OBJ model:<br/><input id="obj" type="file" onchange="LoadObj(this)" accept=".obj"/></div>
+<div class="control">Texture image:<br/><input id="texture" type="file" onchange="LoadTexture(this)" accept="image/*"/></div>
+</div>
+<div class="control-group">
+<img id="texture-img" />
+</div>
+</div>
+</div>
+</body>
+</html>
