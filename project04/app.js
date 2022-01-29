@@ -128,6 +128,7 @@ var showBox;
 window.onload = function() {
 	showBox = document.getElementById('show-box');
 	const showNormalsCheckBox = document.getElementById('show-normals');
+	const colorSelect = document.getElementById('color-select');
 
 	InitWebGL();
 	canvas.zoom = function( s ) {
@@ -159,7 +160,9 @@ window.onload = function() {
 		canvas.onmousemove = null;
 	}
 
+	SelectColor(colorSelect);
 	ShowNormals(showNormalsCheckBox);
+
 	DrawScene();
 };
 function WindowResize()
@@ -197,6 +200,24 @@ function ShowNormals( param )
 {
 	// console.log("Show normals: ", param.checked);
 	meshDrawer.showNormals(param.checked); 
+	DrawScene();
+}
+
+function SelectColor(param){
+	console.log(param.value, typeof(param.value));
+
+	const hexcode = param.value;
+	const color = (function (hex) {
+		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? {
+		  r: parseInt(result[1], 16),
+		  g: parseInt(result[2], 16),
+		  b: parseInt(result[3], 16)
+		} : null;
+	  })(hexcode);
+
+	console.log(color);
+	meshDrawer.updateColor(color);
 	DrawScene();
 }
 
