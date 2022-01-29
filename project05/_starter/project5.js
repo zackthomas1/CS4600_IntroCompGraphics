@@ -5,6 +5,21 @@
 function GetModelViewMatrix( translationX, translationY, translationZ, rotationX, rotationY )
 {
 	// [TO-DO] Modify the code below to form the transformation matrix.
+
+	const rotate_x =[
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	];
+
+	const rotate_y =[
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	];
+
 	var trans = [
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -24,6 +39,21 @@ class MeshDrawer
 	constructor()
 	{
 		// [TO-DO] initializations
+		// comile shader program 
+		this.prog = InitShaderProgram(meshVS, meshFS); 
+
+		// get atttribute locations
+		this.positionLoc = gl.getAttributeLocation(this.prog, 'position');
+		this.normalLoc = gl.getAttributeLocation(this.prog, 'normal');
+		this.texCoordLoc = gl.getAttributeLocation(this.prog, 'texCoord');
+
+		// get uniform locations 
+		this.mvpLoc = gl.getUniformLocation(this.prog, 'mvp'); 
+
+		// create array buffers
+		this.vertBuffer = gl.createBuffer(); 
+		this.normalBuffer = gl.createBuffer(); 
+		this.texcoordBuffer = gl.createBuffer(); 
 	}
 	
 	// This method is called every time the user opens an OBJ file.
@@ -40,6 +70,8 @@ class MeshDrawer
 	setMesh( vertPos, texCoords, normals )
 	{
 		// [TO-DO] Update the contents of the vertex buffer objects.
+
+		
 		this.numTriangles = vertPos.length / 3;
 	}
 	
@@ -96,3 +128,30 @@ class MeshDrawer
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify the shininess.
 	}
 }
+
+const meshVS = `
+	// vertex attributes 
+	attribute vec3 position; 
+	attribute vec3 normal; 
+	attribute vec2 texCoord; 
+
+	// input uniforms 
+	uniform mat4 mvp; 
+
+	// outputs to fragment shader 
+	varying vec2 v_texCoord; 
+
+	void main(){
+		v_texCoord = texCoord; 
+		gl_Position = mvp * vec4(position, 1.0);
+	}
+`; 
+
+const meshFS = `
+	precision mediump float;
+
+	varying vec2 v_texCoord; 
+	void main(){
+		gl_FragColor = vec4(1.0, 0.0, 0.0, 0.0, 1.0);
+	}
+`;
