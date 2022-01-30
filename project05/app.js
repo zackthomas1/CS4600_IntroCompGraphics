@@ -80,7 +80,10 @@ function DrawScene()
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 	
 	// Draw the curve and then the line segments that connect the control points.
-	var nrmTrans = [ mv[0],mv[1],mv[2], mv[4],mv[5],mv[6], mv[8],mv[9],mv[10] ];
+	var nrmTrans = [ mv[0],mv[1],mv[2], 
+					 mv[4],mv[5],mv[6], 
+					 mv[8],mv[9],mv[10], 
+					];
 	meshDrawer.draw( mvp, mv, nrmTrans );
 	if ( showBox.checked ) {
 		boxDrawer.draw( mvp );
@@ -117,23 +120,6 @@ function CompileShader( type, source, wgl=gl )
 		return null;
 	}
 	return shader;
-}
-
-// Multiplies two matrices and returns the result A*B.
-// The arguments A and B are arrays, representing column-major matrices.
-function MatrixMult( A, B )
-{
-	var C = [];
-	for ( var i=0; i<4; ++i ) {
-		for ( var j=0; j<4; ++j ) {
-			var v = 0;
-			for ( var k=0; k<4; ++k ) {
-				v += A[j+4*k] * B[k+4*i];
-			}
-			C.push(v);
-		}
-	}
-	return C;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

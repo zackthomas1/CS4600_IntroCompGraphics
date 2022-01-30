@@ -141,13 +141,15 @@ class MeshDrawer
 					1,0,0,0,
 					0,-1,0,0,
 					0,0,1,0,
-					0,0,0,1], 
+					0,0,0,1
+				], 
 				[
 					1,0,0,0,
 					0,Math.cos(Math.PI/2),Math.sin(Math.PI/2),0,
 					0,-Math.sin(Math.PI/2),Math.cos(Math.PI/2),0,
 					0,0,0,1,
-				]);
+				]
+			);
 		}else{
 			this.yz = [
 				1,0,0,0,
