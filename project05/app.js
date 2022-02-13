@@ -162,6 +162,8 @@ window.onload = function() {
 	}
 	
 	SetShininess( document.getElementById('shininess-exp') );
+	SetLightIntensity( document.getElementById('light-intensity'));
+	SetLightColor( document.getElementById('light-color'));
 	
 	DrawScene();
 };
@@ -253,6 +255,31 @@ function SetShininess( param )
 	document.getElementById('shininess-value').innerText = s.toFixed( s < 10 ? 2 : 0 );
 	meshDrawer.setShininess(s);
 	DrawScene();
+}
+
+function SetLightIntensity(param){
+	const intensity = param.value; 
+	document.getElementById('intensity-value').innerText = param.value;
+	meshDrawer.setLightIntensity(intensity);
+	DrawScene();
+}
+
+function SetLightColor(param){
+
+	const hexcode = param.value;
+	const color = (function (hex) {
+		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? {
+		  r: parseInt(result[1], 16),
+		  g: parseInt(result[2], 16),
+		  b: parseInt(result[3], 16)
+		} : null;
+	  })(hexcode);
+
+	console.log(color);
+
+	meshDrawer.setLightColor(color); 
+	DrawScene()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

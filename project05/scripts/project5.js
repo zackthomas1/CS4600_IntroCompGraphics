@@ -26,7 +26,6 @@ function transposeMatrix(matrix){
 	return output;
 }
 
-
 // This function takes the translation and two rotation angles (in radians) as input arguments.
 // The two rotations are applied around x and y axes.
 // It returns the combined 4x4 transformation matrix as an array in column-major order.
@@ -89,6 +88,9 @@ class MeshDrawer
 		// fragment
 		this.alphaLoc = gl.getUniformLocation(this.prog, 'alpha');
 		this.showTexLoc = gl.getUniformLocation(this.prog, 'showTex');
+		this.lightDirLoc = gl.getUniformLocation(this.prog, 'lightDir');
+		this.lightIntensityLoc = gl.getUniformLocation(this.prog, 'lightIntensity');
+		this.lightColorLoc = gl.getUniformLocation(this.prog, 'lightColor')
 
 		// create array buffers
 		this.positionBuffer = gl.createBuffer(); 
@@ -137,7 +139,6 @@ class MeshDrawer
 	{
 
 		// [TO-DO] Set the uniform parameter(s) of the vertex shader
-
 		if (swap){
 			this.yzSwapMat = MatrixMult(
 				[
@@ -161,7 +162,6 @@ class MeshDrawer
 				0,0,0,1
 			]
 		}
-
 	}
 	
 	// This method is called to draw the triangular mesh.
@@ -179,7 +179,6 @@ class MeshDrawer
 		gl.uniformMatrix4fv(this.mvLoc, false, matrixMV); 
 		gl.uniformMatrix3fv(this.mvNormalLoc, false, matrixNormal);
 		gl.uniformMatrix4fv(this.yzSwapLoc, false, this.yzSwapMat);
-
 
 		// Set Vertex attributes 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer); 
@@ -247,6 +246,8 @@ class MeshDrawer
 	setLightDir( x, y, z )
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify the light direction.
+		gl.useProgram(this.prog);
+		gl.uniform3f(this.lightDirLoc,x,y,z)
 	}
 	
 	// This method is called to set the shininess of the material
@@ -254,8 +255,19 @@ class MeshDrawer
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify the shininess.
 		gl.useProgram(this.prog); 
-		gl.uniform1f(this.alphaLoc);
+		gl.uniform1f(this.alphaLoc, shininess);
 	}
+
+	setLightIntensity(intensity){
+		gl.useProgram(this.prog); 
+		gl.uniform1f(this.lightIntensityLoc, intensity);
+	}
+
+	setLightColor(color){
+		gl.useProgram(this.prog); 
+		gl.uniform3f(this.lightColorLoc, color.r/255, color.g/255, color.b/255);
+	}
+	
 }
 
 const meshVS = `
@@ -288,6 +300,8 @@ const meshFS = `
 	// input uniforms 
 	uniform bool showTex;
 	uniform vec3 lightDir;
+	uniform float lightIntensity;
+	uniform vec3 lightColor;
 	uniform float alpha;
 
 	uniform sampler2D tex;
@@ -296,10 +310,21 @@ const meshFS = `
 	varying vec2 v_texCoord; 
 
 	void main(){
+		vec4 diffuseColor = vec4(1.0); // Cr
 		if(showTex){
-			gl_FragColor = texture2D(tex, v_texCoord);
+			diffuseColor = texture2D(tex, v_texCoord);
 		}else{
-			gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+			diffuseColor =  vec4(1.0, 0.1, 0.1, 1.0);
 		}
+
+		// dot product between normalized normal and lightDir vectors results 
+		// in cos(theta) where theta is the angle between the two vectors 
+		float geometryComponent = max(0.0,dot(normalize(v_normal), normalize(lightDir))); 
+		
+		vec4 lightingComponent = lightIntensity * vec4(lightColor, 1.0); //Cl
+		
+		vec4 ambientColor = vec4(0.1,0.1,0.1,1.0);
+
+		gl_FragColor = diffuseColor * ( ambientColor + (lightingComponent * geometryComponent));
 	}
 `;

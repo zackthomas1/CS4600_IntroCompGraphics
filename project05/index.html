@@ -15,7 +15,19 @@
 		<div id="canvas-div">
 			<canvas id="canvas"></canvas></div><div id="controls-div">
 			<div id="controls">
-				<div class="control-group"><canvas id="lightcontrol"></canvas><div id="lightcontrol-label">Light Direction</div></div>
+				
+				<div class="control-group" id="light-controls">
+					<canvas id="lightcontrol"></canvas><div id="lightcontrol-label">Light Direction</div>
+					<div class="control">
+						<label for="light-intesity">Light Intensity: <span id="intensity-value">1</span></label>
+						<input id="light-intensity" type="range" min="0" max="10" value="1" step="0.1" onchange="SetLightIntensity(this)">
+					</div>
+					<div class="control">
+						<label for="light-color">Light Color: </label>
+						<input type="color" id="light-color" value="#ffffff" onchange="SetLightColor(this)">
+					</div>
+				</div>
+
 				<div class="control-group">
 					<div class="control">
 						<input id="show-box" name="show-box" type="checkbox" onchange="DrawScene()" checked /><label for="show-box"> Show Box</label>
@@ -30,10 +42,12 @@
 						<input id="auto-rotate" name="auto-rotate" type="checkbox" onchange="AutoRotate(this)"/><label for="auto-rotate"> Auto Rotation</label>
 					</div>
 					<div class="control">
+						<label for="rotation-speed"> Rotation Speed:</label>
 						<input id="rotation-speed" type="range" min="1" max="100" value="50" disabled/>
 					</div>
 					<div class="control">
-						<span id="shininess-label">Shininess:</span><span id="shininess-value">1</span><input id="shininess-exp" type="range" min="0" max="100" value="50" oninput="SetShininess(this)"/>
+						<span id="shininess-label">Shininess:</span><span id="shininess-value">1</span>
+						<input id="shininess-exp" type="range" min="0" max="100" value="50" oninput="SetShininess(this)"/>
 					</div>
 				</div>
 				<div class="control-group">
