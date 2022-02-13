@@ -111,11 +111,18 @@ function InitShaderProgram( vsSource, fsSource, wgl=gl )
 // This is a helper function for compiling a shader, called by InitShaderProgram().
 function CompileShader( type, source, wgl=gl )
 {
+	let typeStr = ""; 
+	if(type === wgl.VERTEX_SHADER){
+		typeStr = "vertex"; 
+	}else if(type === wgl.FRAGMENT_SHADER){
+		typeStr = "fragment"
+	}
+
 	const shader = wgl.createShader(type);
 	wgl.shaderSource(shader, source);
 	wgl.compileShader(shader);
 	if (!wgl.getShaderParameter( shader, wgl.COMPILE_STATUS) ) {
-		alert('An error occurred compiling shader:\n' + wgl.getShaderInfoLog(shader));
+		alert(`An error occurred compiling ${typeStr} shader:\n` + wgl.getShaderInfoLog(shader));
 		wgl.deleteShader(shader);
 		return null;
 	}
@@ -164,6 +171,7 @@ window.onload = function() {
 	SetShininess( document.getElementById('shininess-exp') );
 	SetLightIntensity( document.getElementById('light-intensity'));
 	SetLightColor( document.getElementById('light-color'));
+	SetSpecColor(document.getElementById('highlight-color'));
 	
 	DrawScene();
 };
@@ -264,21 +272,30 @@ function SetLightIntensity(param){
 	DrawScene();
 }
 
+function HexToRGB(hex){
+	var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	return result ? {
+	  r: parseInt(result[1], 16)/255,
+	  g: parseInt(result[2], 16)/255,
+	  b: parseInt(result[3], 16)/255
+	} : null;
+
+}
+
 function SetLightColor(param){
 
 	const hexcode = param.value;
-	const color = (function (hex) {
-		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-		return result ? {
-		  r: parseInt(result[1], 16),
-		  g: parseInt(result[2], 16),
-		  b: parseInt(result[3], 16)
-		} : null;
-	  })(hexcode);
-
-	console.log(color);
+	const color = HexToRGB(hexcode); 
 
 	meshDrawer.setLightColor(color); 
+	DrawScene()
+}
+
+function SetSpecColor(param){
+	const hexcode = param.value;
+	const color = HexToRGB(hexcode); 
+
+	meshDrawer.setSpecColor(color)
 	DrawScene()
 }
 

@@ -86,11 +86,12 @@ class MeshDrawer
 		this.yzSwapLoc = gl.getUniformLocation(this.prog, 'yzSwap');
 
 		// fragment
-		this.alphaLoc = gl.getUniformLocation(this.prog, 'alpha');
 		this.showTexLoc = gl.getUniformLocation(this.prog, 'showTex');
 		this.lightDirLoc = gl.getUniformLocation(this.prog, 'lightDir');
+		this.lightColorLoc = gl.getUniformLocation(this.prog, 'lightColor');
+		this.specColorLoc = gl.getUniformLocation(this.prog, 'specColor');
 		this.lightIntensityLoc = gl.getUniformLocation(this.prog, 'lightIntensity');
-		this.lightColorLoc = gl.getUniformLocation(this.prog, 'lightColor')
+		this.phongExpoLoc = gl.getUniformLocation(this.prog, 'phongExpo');
 
 		// create array buffers
 		this.positionBuffer = gl.createBuffer(); 
@@ -255,7 +256,7 @@ class MeshDrawer
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify the shininess.
 		gl.useProgram(this.prog); 
-		gl.uniform1f(this.alphaLoc, shininess);
+		gl.uniform1f(this.phongExpoLoc, shininess);
 	}
 
 	setLightIntensity(intensity){
@@ -265,7 +266,12 @@ class MeshDrawer
 
 	setLightColor(color){
 		gl.useProgram(this.prog); 
-		gl.uniform3f(this.lightColorLoc, color.r/255, color.g/255, color.b/255);
+		gl.uniform3f(this.lightColorLoc, color.r, color.g, color.b);
+	}
+
+	setSpecColor(color){
+		gl.useProgram(this.prog); 
+		gl.uniform3f(this.specColorLoc, color.r, color.g, color.b);
 	}
 	
 }
@@ -279,16 +285,18 @@ const meshVS = `
 	// input uniforms 
 	uniform mat4 mvp;
 	uniform mat4 mv; 
-	uniform mat3 mvNormal; 
+	uniform mat3 normalMV; 
 	uniform mat4 yzSwap; 
 
 	// outputs to fragment shader
-	varying vec3 v_normal; 
 	varying vec2 v_texCoord; 
+	varying vec3 v_viewNormal; 
+	varying vec4 v_viewFragPos; 
 
 	void main(){
-		v_normal = normal;
+		v_viewNormal = normalMV * normal;
 		v_texCoord = texCoord;
+		v_viewFragPos = mv * vec4(position,0.0);
 
 		gl_Position = mvp * yzSwap* vec4(position, 1.0);
 	}
@@ -300,16 +308,20 @@ const meshFS = `
 	// input uniforms 
 	uniform bool showTex;
 	uniform vec3 lightDir;
-	uniform float lightIntensity;
 	uniform vec3 lightColor;
-	uniform float alpha;
+	uniform vec3 specColor;
+	uniform float lightIntensity;
+	uniform float phongExpo;
 
 	uniform sampler2D tex;
 
-	varying vec3 v_normal;
+	// inputs from vertex shader
 	varying vec2 v_texCoord; 
+	varying vec3 v_viewNormal;
+	varying vec4 v_viewFragPos; 
 
 	void main(){
+
 		vec4 diffuseColor = vec4(1.0); // Cr
 		if(showTex){
 			diffuseColor = texture2D(tex, v_texCoord);
@@ -319,12 +331,22 @@ const meshFS = `
 
 		// dot product between normalized normal and lightDir vectors results 
 		// in cos(theta) where theta is the angle between the two vectors 
-		float geometryComponent = max(0.0,dot(normalize(v_normal), normalize(lightDir))); 
-		
-		vec4 lightingComponent = lightIntensity * vec4(lightColor, 1.0); //Cl
-		
-		vec4 ambientColor = vec4(0.1,0.1,0.1,1.0);
+		float geometryTerm = max(0.0,dot(normalize(v_viewNormal), normalize(lightDir))); 
 
-		gl_FragColor = diffuseColor * ( ambientColor + (lightingComponent * geometryComponent));
+		vec4 lightingColor = lightIntensity * vec4(lightColor, 1.0); // Cl
+		vec4 ambientColor =  lightIntensity * vec4(0.1,0.1,0.1,1.0); // Ca
+
+		vec4 diffuseLighting = diffuseColor * (ambientColor + (lightingColor * geometryTerm));
+
+		vec3 viewDir = normalize(vec3(v_viewFragPos) - vec3(0.0));
+		vec3 halfAngle = normalize(lightDir + viewDir);
+
+		float cosOmega = max(0.0, dot(halfAngle, normalize(v_viewNormal)));
+		vec4 specularLighting = lightIntensity * vec4(specColor,1.0) *  vec4(lightColor, 1.0) * pow(cosOmega, phongExpo);
+
+		gl_FragColor = diffuseLighting + specularLighting;
+		// gl_FragColor = vec4(halfAngle,1.0);
+		// gl_FragColor = vec4(v_viewNormal,1.0);
 	}
 `;
+
