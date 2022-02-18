@@ -23,5 +23,8 @@ Selected foreground image layer can be translated.
 <h3> Project 4: Triangles </h3> 
 <p> A .obj model viewer using WebGL. View 3D models with textures. Option to display vertex normals. No lighting.</p>
 
+<h3> Project 5: shading </h3> 
+<p> Extends project 4 model viewer web application to implement blinn/phong shading model. Light source is a single directional light.</p>
+
 <h3> Project 6: Ray Tracing </h3> 
 <p> </p>
