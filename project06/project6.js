@@ -1,3 +1,4 @@
+
 var raytraceFS = `
 struct Ray {
 	vec3 pos;
@@ -44,7 +45,8 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 		// TO-DO: If not shadowed, perform shading using the Blinn model
 		color += mtl.k_d * lights[i].intensity;	// change this line
 	}
-	return color;
+	// return color;
+	return mtl.k_d;
 }
 
 // Intersects the given ray with all spheres in the scene
@@ -56,8 +58,27 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 	hit.t = 1e30;
 	bool foundHit = false;
 	for ( int i=0; i<NUM_SPHERES; ++i ) {
+		Sphere sphere = spheres[i];
+
 		// TO-DO: Test for ray-sphere intersection
+		float discriminant = pow(dot(ray.dir, (ray.pos - sphere.center)), 2.0) - 
+			(dot(ray.dir, ray.dir) * (dot((ray.pos - sphere.center), (ray.pos - sphere.center)) - pow(sphere.radius, 2.0))); 
+
+		if(discriminant >= 0.0){
+			foundHit = true; 
+		}
+
 		// TO-DO: If intersection is found, update the given HitInfo
+		if(foundHit){
+			// find the t value of closet ray-sphere intersection
+			float tVal = ((-1.0 * dot(ray.dir, (ray.pos-sphere.center))) - sqrt(discriminant)) / (dot(ray.dir, ray.dir));
+			if(tVal < hit.t){
+				hit.t = tVal; 
+				hit.position = ray.pos + (ray.dir * tVal) ; 
+				hit.normal = (hit.position - sphere.center)/sphere.radius; 
+				hit.mtl = sphere.mtl;
+			}
+		}
 	}
 	return foundHit;
 }
@@ -92,6 +113,7 @@ vec4 RayTracer( Ray ray )
 				break;	// no more reflections
 			}
 		}
+		
 		return vec4( clr, 1 );	// return the accumulated color, including the reflections
 	} else {
 		return vec4( textureCube( envMap, ray.dir.xzy ).rgb, 0 );	// return the environment color

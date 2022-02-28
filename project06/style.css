@@ -1,0 +1,64 @@
+html {
+	color: white;
+	background-color: black;
+	font-family: Arial;
+	overflow: hidden;
+}
+body {
+	padding: 0;
+	margin: 0;
+}
+input[type=checkbox], label {
+	cursor: hand;
+}
+input[type=range] {
+	width: 100%;
+}
+canvas {
+	display: block;
+	position: absolute;
+	top:  0;
+	left: 0;
+	width:  100%;
+	height: 100%;
+}
+#canvas-div {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+#controls-div {
+	background-color: rgba(0,0,0,0.5);
+	position: absolute;
+	right: 1em;
+	top: 1em;
+	width: 18em;
+}
+#controls {
+	padding: 1em;
+}
+.control {
+	padding: 0.2em;
+	clear: both;
+}
+.val {
+	float: right;
+	text-align: right;
+}
+.value {
+	margin-right: 0.5em;
+}
+.btn {
+	width: 100%;
+}
+#buttons {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+#buttons input[type=button] {
+	background-color: rgba(80,80,80,0.5);
+	color: #aaa;
+	font-size: 70%;
+	outline: none;
+}
