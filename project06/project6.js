@@ -72,11 +72,16 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 		if(foundHit){
 			// find the t value of closet ray-sphere intersection
 			float tVal = ((-1.0 * dot(ray.dir, (ray.pos-sphere.center))) - sqrt(discriminant)) / (dot(ray.dir, ray.dir));
-			if(tVal < hit.t){
-				hit.t = tVal; 
-				hit.position = ray.pos + (ray.dir * tVal) ; 
-				hit.normal = (hit.position - sphere.center)/sphere.radius; 
-				hit.mtl = sphere.mtl;
+			if(tVal < 0.0){
+				foundHit = false;
+			}else{
+				if(tVal < hit.t){
+					hit.t = tVal; 
+					hit.position = ray.pos + (ray.dir * tVal) ; 
+					hit.normal = (hit.position - sphere.center)/sphere.radius; 
+	
+					hit.mtl = sphere.mtl;
+				}
 			}
 		}
 	}
@@ -93,26 +98,26 @@ vec4 RayTracer( Ray ray )
 		vec3 clr = Shade( hit.mtl, hit.position, hit.normal, view );
 		
 		// Compute reflections
-		vec3 k_s = hit.mtl.k_s;
-		for ( int bounce=0; bounce<MAX_BOUNCES; ++bounce ) {
-			if ( bounce >= bounceLimit ) break;
-			if ( hit.mtl.k_s.r + hit.mtl.k_s.g + hit.mtl.k_s.b <= 0.0 ) break;
+		// vec3 k_s = hit.mtl.k_s;
+		// for ( int bounce=0; bounce<MAX_BOUNCES; ++bounce ) {
+		// 	if ( bounce >= bounceLimit ) break;
+		// 	if ( hit.mtl.k_s.r + hit.mtl.k_s.g + hit.mtl.k_s.b <= 0.0 ) break;
 			
-			Ray r;	// this is the reflection ray
-			HitInfo h;	// reflection hit info
+		// 	Ray r;	// this is the reflection ray
+		// 	HitInfo h;	// reflection hit info
 			
-			// TO-DO: Initialize the reflection ray
+		// 	TO-DO: Initialize the reflection ray
 			
-			if ( IntersectRay( h, r ) ) {
-				// TO-DO: Hit found, so shade the hit point
-				// TO-DO: Update the loop variables for tracing the next reflection ray
-			} else {
-				// The refleciton ray did not intersect with anything,
-				// so we are using the environment color
-				clr += k_s * textureCube( envMap, r.dir.xzy ).rgb;
-				break;	// no more reflections
-			}
-		}
+		// 	if ( IntersectRay( h, r ) ) {
+		// 		TO-DO: Hit found, so shade the hit point
+		// 		TO-DO: Update the loop variables for tracing the next reflection ray
+		// 	} else {
+		// 		The refleciton ray did not intersect with anything,
+		// 		so we are using the environment color
+		// 		clr += k_s * textureCube( envMap, r.dir.xzy ).rgb;
+		// 		break;	// no more reflections
+		// 	}
+		// }
 		
 		return vec4( clr, 1 );	// return the accumulated color, including the reflections
 	} else {
