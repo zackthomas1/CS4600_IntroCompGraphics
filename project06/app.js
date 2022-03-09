@@ -221,8 +221,16 @@ var spheres = fixed_spheres.slice();
 var lights = [
 	{
 		position:  [ 0, 0, 1000 ],
-		intensity: [ 1, 1, 1 ]
-	}
+		intensity: [ 1.0, 1.0, 1.0 ]
+	}, 
+	// {
+	// 	position:  [ 500, 1000, 1000 ],
+	// 	intensity: [ 0.5, 0.7, 0.9 ]
+	// }, 
+	// {
+	// 	position:  [ -1000, -1000, 500 ],
+	// 	intensity: [ 0.9, 0.4, 0.2 ]
+	// }, 
 ];
 
 const raytraceFS_header = `

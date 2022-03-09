@@ -1,4 +1,3 @@
-
 var raytraceFS = `
 struct Ray {
 	vec3 pos;
@@ -34,19 +33,33 @@ uniform Light  lights [ NUM_LIGHTS  ];
 uniform samplerCube envMap;
 uniform int bounceLimit;
 
-bool IntersectRay( inout HitInfo hit, Ray ray );
 
-// Shades the given point and returns the computed color.
-vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
-{
-	vec3 color = vec3(0,0,0);
-	for ( int i=0; i<NUM_LIGHTS; ++i ) {
-		// TO-DO: Check for shadows
-		// TO-DO: If not shadowed, perform shading using the Blinn model
-		color += mtl.k_d * lights[i].intensity;	// change this line
+bool IntersectShadowRay(Ray ray){
+	
+	bool foundHit = false;
+	for ( int i=0; i<NUM_SPHERES; ++i ) {
+		Sphere sphere = spheres[i];
+
+		// TO-DO: Test for ray-sphere intersection
+		float discriminant = pow(dot(ray.dir, (ray.pos - sphere.center)), 2.0) - 
+			(dot(ray.dir, ray.dir) * (dot((ray.pos - sphere.center), (ray.pos - sphere.center)) - pow(sphere.radius, 2.0))); 
+
+		if(discriminant >= 0.0){
+			foundHit = true; 
+		}
+
+		// find the t value of closet ray-sphere intersection
+		float tVal = ((-1.0 * dot(ray.dir, (ray.pos-sphere.center))) - sqrt(discriminant)) / (dot(ray.dir, ray.dir));
+		if(tVal < 0.0){
+			foundHit = false;
+		}
+		
+		// TO-DO: If intersection is found, update the given HitInfo
+		if(foundHit){
+			return foundHit;
+		}	
 	}
-	// return color;
-	return mtl.k_d;
+	return foundHit;
 }
 
 // Intersects the given ray with all spheres in the scene
@@ -68,24 +81,56 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 			foundHit = true; 
 		}
 
-		// TO-DO: If intersection is found, update the given HitInfo
-		if(foundHit){
-			// find the t value of closet ray-sphere intersection
-			float tVal = ((-1.0 * dot(ray.dir, (ray.pos-sphere.center))) - sqrt(discriminant)) / (dot(ray.dir, ray.dir));
-			if(tVal < 0.0){
-				foundHit = false;
-			}else{
-				if(tVal < hit.t){
-					hit.t = tVal; 
-					hit.position = ray.pos + (ray.dir * tVal) ; 
-					hit.normal = (hit.position - sphere.center)/sphere.radius; 
-	
-					hit.mtl = sphere.mtl;
-				}
-			}
+		// find the t value of closet ray-sphere intersection
+		float tVal = ((-1.0 * dot(ray.dir, (ray.pos-sphere.center))) - sqrt(discriminant)) / (dot(ray.dir, ray.dir));
+		if(tVal < 0.0){
+			foundHit = false;
 		}
+		
+		// TO-DO: If intersection is found, update the given HitInfo
+		if(foundHit && tVal < hit.t){
+			hit.t = tVal; 
+			hit.position = ray.pos + (ray.dir * tVal) ; 
+			hit.normal = (hit.position - sphere.center)/sphere.radius; 
+
+			hit.mtl = sphere.mtl;
+		}	
 	}
 	return foundHit;
+}
+
+// Shades the given point and returns the computed color.
+vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
+{
+	float eplison = 0.004;
+	vec3 ambientComponent = mtl.k_d * 0.1;
+	vec3 color;
+	normal = normalize(normal);
+
+	for ( int i=0; i<NUM_LIGHTS; ++i ) {
+		// TO-DO: Check for shadows
+		bool isShadowed = false;
+
+		Ray surfaceToLightRay; 
+		surfaceToLightRay.dir = normalize(lights[i].position - position);
+		surfaceToLightRay.pos = position + (surfaceToLightRay.dir) * eplison;  
+
+		if( IntersectShadowRay(surfaceToLightRay) ){
+			// color += vec3(1.0,0.0,0.0);	// Test Shadows
+			color += ambientComponent;
+		}else{
+			// TO-DO: If not shadowed, perform shading using the Blinn model
+			vec3 lightDir = normalize((lights[i].position - position));
+			float cosTheta = dot(normal, lightDir);
+			vec3 diffuseComponent = mtl.k_d * lights[i].intensity * max(0.0, cosTheta); 
+			
+			vec3 halfAngle = normalize(view + lightDir);
+			vec3 specularComponent = mtl.k_s * lights[i].intensity * pow(max(0.0, dot(normal, halfAngle)),mtl.n); 
+			
+			color += ambientComponent + diffuseComponent + specularComponent;	// change this line	
+		}
+	}
+	return color;
 }
 
 // Given a ray, returns the shaded color where the ray intersects a sphere.
