@@ -356,6 +356,7 @@ class SecondaryRayTracer extends RayTracer
 	}
 }
 
+
 var screenQuad = {
 	init( fov, z )
 	{
