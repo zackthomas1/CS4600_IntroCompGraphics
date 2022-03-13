@@ -54,7 +54,6 @@ bool IntersectShadowRay(Ray ray){
 			foundHit = false;
 		}
 		
-		// TO-DO: If intersection is found, update the given HitInfo
 		if(foundHit){
 			return foundHit;
 		}	
@@ -70,6 +69,7 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 {
 	hit.t = 1e30;
 	bool foundHit = false;
+
 	for ( int i=0; i<NUM_SPHERES; ++i ) {
 		Sphere sphere = spheres[i];
 
@@ -77,24 +77,24 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 		float discriminant = pow(dot(ray.dir, (ray.pos - sphere.center)), 2.0) - 
 			(dot(ray.dir, ray.dir) * (dot((ray.pos - sphere.center), (ray.pos - sphere.center)) - pow(sphere.radius, 2.0))); 
 
-		if(discriminant >= 0.0){
-			foundHit = true; 
-		}
+		if(discriminant >= 0.0){ // hit found
 
-		// find the t value of closet ray-sphere intersection
-		float tVal = ((-1.0 * dot(ray.dir, (ray.pos-sphere.center))) - sqrt(discriminant)) / (dot(ray.dir, ray.dir));
-		if(tVal < 0.0){
-			foundHit = false;
+			// find the t value of closet ray-sphere intersection
+			float t0 = (-(dot(ray.dir, (ray.pos-sphere.center))) - sqrt(discriminant)) / (dot(ray.dir, ray.dir));
+
+			// TO-DO: If intersection is found, update the given HitInfo
+			if( t0 > 0.0 && t0 <= hit.t){
+				foundHit = true;
+
+				hit.t = t0; 
+				hit.position = ray.pos + (ray.dir * t0) ; 
+				hit.normal = normalize((hit.position - sphere.center)/sphere.radius); 
+	
+				hit.mtl = sphere.mtl;
+			}	
+	
 		}
 		
-		// TO-DO: If intersection is found, update the given HitInfo
-		if(foundHit && tVal < hit.t){
-			hit.t = tVal; 
-			hit.position = ray.pos + (ray.dir * tVal) ; 
-			hit.normal = (hit.position - sphere.center)/sphere.radius; 
-
-			hit.mtl = sphere.mtl;
-		}	
 	}
 	return foundHit;
 }
@@ -102,15 +102,14 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 {
-	float eplison = 0.004;
-	vec3 ambientComponent = mtl.k_d * 0.1;
+	float eplison = 0.003;
+	vec3 ambientComponent = mtl.k_d * 0.05;
 	vec3 color;
 	normal = normalize(normal);
 
 	for ( int i=0; i<NUM_LIGHTS; ++i ) {
+		
 		// TO-DO: Check for shadows
-		bool isShadowed = false;
-
 		Ray surfaceToLightRay; 
 		surfaceToLightRay.dir = normalize(lights[i].position - position);
 		surfaceToLightRay.pos = position + (surfaceToLightRay.dir) * eplison;  
@@ -143,26 +142,35 @@ vec4 RayTracer( Ray ray )
 		vec3 clr = Shade( hit.mtl, hit.position, hit.normal, view );
 		
 		// Compute reflections
-		// vec3 k_s = hit.mtl.k_s;
-		// for ( int bounce=0; bounce<MAX_BOUNCES; ++bounce ) {
-		// 	if ( bounce >= bounceLimit ) break;
-		// 	if ( hit.mtl.k_s.r + hit.mtl.k_s.g + hit.mtl.k_s.b <= 0.0 ) break;
+		vec3 k_s = hit.mtl.k_s;
+		for ( int bounce=0; bounce<MAX_BOUNCES; ++bounce ) {
+			if ( bounce >= bounceLimit ) break;
+			if ( hit.mtl.k_s.r + hit.mtl.k_s.g + hit.mtl.k_s.b <= 0.0 ) break;
 			
-		// 	Ray r;	// this is the reflection ray
-		// 	HitInfo h;	// reflection hit info
+			Ray r;	// this is the reflection ray
+			HitInfo h;	// reflection hit info
 			
-		// 	TO-DO: Initialize the reflection ray
+			// TO-DO: Initialize the reflection ray
+			r.dir = normalize(ray.dir) - 2.0 * (dot(normalize(ray.dir), hit.normal))* hit.normal;
+			r.pos = hit.position + (r.dir) * 0.0001;
+
 			
-		// 	if ( IntersectRay( h, r ) ) {
-		// 		TO-DO: Hit found, so shade the hit point
-		// 		TO-DO: Update the loop variables for tracing the next reflection ray
-		// 	} else {
-		// 		The refleciton ray did not intersect with anything,
-		// 		so we are using the environment color
-		// 		clr += k_s * textureCube( envMap, r.dir.xzy ).rgb;
-		// 		break;	// no more reflections
-		// 	}
-		// }
+			if ( IntersectRay( h, r ) ) {
+				// TO-DO: Hit found, so shade the hit point
+				// clr += vec3(h.normal); // Test reflection intersections
+				// clr += vec3(1.0, 0.0, 0.0);
+				clr += Shade(h.mtl, h.position, h.normal, view);
+				
+				// TO-DO: Update the loop variables for tracing the next reflection ray
+				hit = h;
+				ray = r;					
+			} else {
+				// The refleciton ray did not intersect with anything,
+				// so we are using the environment color
+				clr += k_s * textureCube( envMap, r.dir.xzy ).rgb;
+				break;	// no more reflections
+			}
+		}
 		
 		return vec4( clr, 1 );	// return the accumulated color, including the reflections
 	} else {
