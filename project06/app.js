@@ -223,14 +223,14 @@ var lights = [
 		position:  [ 0, 0, 1000 ],
 		intensity: [ 1.0, 1.0, 1.0 ]
 	}, 
-	{
-		position:  [ 500, 1000, 1000 ],
-		intensity: [ 0.5, 0.7, 0.9 ]
-	}, 
-	{
-		position:  [ -1000, -1000, 500 ],
-		intensity: [ 0.9, 0.4, 0.2 ]
-	}, 
+	// {
+	// 	position:  [ 500, 1000, 1000 ],
+	// 	intensity: [ 0.5, 0.7, 0.9 ]
+	// }, 
+	// {
+	// 	position:  [ -1000, -1000, 500 ],
+	// 	intensity: [ 0.9, 0.4, 0.2 ]
+	// }, 
 ];
 
 const raytraceFS_header = `
@@ -304,7 +304,7 @@ class RayTracer
 			gl.uniform3fv( gl.getUniformLocation( this.prog, 'spheres['+i+'].center' ), spheres[i].center );
 			gl.uniform1f ( gl.getUniformLocation( this.prog, 'spheres['+i+'].radius' ), spheres[i].radius );
 			setMaterial( this.prog, 'spheres['+i+'].mtl', spheres[i].mtl );
-			// console.log(spheres[i]);
+			console.log(spheres[i]);
 		}
 		for ( var i=0; i<lights.length; ++i ) {
 			gl.uniform3fv( gl.getUniformLocation( this.prog, 'lights['+i+'].position'  ), lights[i].position  );
@@ -789,17 +789,4 @@ function ShowControls()
 	c.style.display = c.style.display == 'none' ? '' : 'none';
 }
 
-let timer; 
-let autorot = 0;
-function ToggleRotateLights(param){
-	if(param.checked){
-		timer = setInterval(function(){
-			autorot += 0.005
-			if ( autorot > 2*Math.PI ) autorot -= 2*Math.PI;
-		})
-
-	}else{
-		clearInterval( timer );
-	}
-}
 ///////////////////////////////////////////////////////////////////////////////////
