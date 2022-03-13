@@ -72,8 +72,7 @@
 				vec4 rd = c2w * vec4(p,1);
 				ray_dir = rd.xyz - ray_pos; // from camera origin to fragment position
 			}
-		</script>
-			
+		</script>	
 		<script id="envFS" type="x-shader/x-fragment">
 			precision mediump float;
 			varying vec3 ray_dir;
@@ -145,7 +144,8 @@
 						<hr/>
 					</div>
 					<div id class="control">
-
+						<input type="checkbox" id="rotate-lights" name="rotate-light" onclick="ToggleRotateLights(this)">
+						<label for="rotate-lights">Rotate Lights</label>
 					</div>
 
 
