@@ -33,6 +33,7 @@ uniform Light  lights [ NUM_LIGHTS  ];
 uniform samplerCube envMap;
 uniform int bounceLimit;
 
+
 bool IntersectShadowRay(Ray ray){
 	
 	bool foundHit = false;
@@ -91,7 +92,9 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 	
 				hit.mtl = sphere.mtl;
 			}	
+	
 		}
+		
 	}
 	return foundHit;
 }
@@ -155,6 +158,7 @@ vec4 RayTracer( Ray ray )
 			if ( IntersectRay( h, r ) ) {
 				// TO-DO: Hit found, so shade the hit point
 				// clr += vec3(h.normal); // Test reflection intersections
+				// clr += vec3(1.0, 0.0, 0.0);
 				clr += Shade(h.mtl, h.position, h.normal, view);
 				
 				// TO-DO: Update the loop variables for tracing the next reflection ray
@@ -166,7 +170,8 @@ vec4 RayTracer( Ray ray )
 				clr += k_s * textureCube( envMap, r.dir.xzy ).rgb;
 				break;	// no more reflections
 			}
-		}	
+		}
+		
 		return vec4( clr, 1 );	// return the accumulated color, including the reflections
 	} else {
 		return vec4( textureCube( envMap, ray.dir.xzy ).rgb, 0 );	// return the environment color
