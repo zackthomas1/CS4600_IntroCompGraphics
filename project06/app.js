@@ -193,7 +193,7 @@ var perspectiveMatrix;	// perspective projection matrix
 var environmentTexture;
 var viewRotX=0, viewRotZ=0, transZ=3;
 var sphereCount = 10;
-var primaryRT, secondaryRT;
+var primaryRT, secondaryRT, quadraticRT;
 
 var fixed_spheres = [
 	{
@@ -280,7 +280,7 @@ class RayTracer
 			#define NUM_LIGHTS  ` + lights.length + `
 			#define MAX_BOUNCES ` + maxBounceLimit + `
 		`;
-		this.prog = InitShaderProgram( vs, raytraceFS_head+raytraceFS+fs );
+		this.prog = InitShaderProgram( vs, raytraceFS_head+fs );
 		if ( ! this.prog ) return;
 		
 		function setMaterial( prog, v, mtl )
@@ -324,7 +324,7 @@ class PrimaryRayTracer extends RayTracer
 {
 	init()
 	{
-		this.initProg( document.getElementById('raytraceVS').text, raytraceFS_primary );
+		this.initProg( document.getElementById('raytraceVS').text, raytraceFS+raytraceFS_primary );
 	}
 	draw( trans )
 	{
@@ -342,7 +342,7 @@ class SecondaryRayTracer extends RayTracer
 	}
 	init()
 	{
-		this.initProg( document.getElementById('sphereVS').text, raytraceFS_secondary );
+		this.initProg( document.getElementById('sphereVS').text, raytraceFS+raytraceFS_secondary );
 		if ( ! this.prog ) return;
 		this.sphere.prog = this.prog;
 		this.sphere.init();
@@ -356,6 +356,30 @@ class SecondaryRayTracer extends RayTracer
 	}
 }
 
+const quadraticFS_primary = `
+	varying vec3 ray_pos;
+	varying vec3 ray_dir;
+
+	void main()
+	{
+		Ray primary_ray;
+		primary_ray.pos = ray_pos;
+		primary_ray.dir = ray_dir;
+		gl_FragColor = RayTracerHyperbolicParaboloid( primary_ray );
+	}
+`;
+class QuadraticRayTracer extends RayTracer
+{
+	init()
+	{
+		this.initProg( document.getElementById('raytraceVS').text, quadraticFS+quadraticFS_primary );
+	}
+	draw( trans )
+	{
+		if ( ! this.prog ) return;
+		screenQuad.draw( this.prog, trans );
+	}
+}
 
 var screenQuad = {
 	init( fov, z )
@@ -449,6 +473,7 @@ function InitScene()
 	}
 	primaryRT.init();
 	secondaryRT.init();
+	quadraticRT.init();
 }
 
 function InitEnvironmentMap()
@@ -517,6 +542,7 @@ function InitWebGL()
 
 	primaryRT   = new PrimaryRayTracer;
 	secondaryRT = new SecondaryRayTracer;
+	quadraticRT = new QuadraticRayTracer;
 
 	sphereDrawer = new SphereDrawer;
 	sphereDrawer.setLight( lights[0].position, lights[0].intensity );
@@ -621,6 +647,11 @@ function DrawScene()
 	// Rasterization + Ray Tracing
 	if ( document.getElementById('secondary').checked ) {
 		secondaryRT.draw( mvp, trans );
+	}
+
+	// Quadratic 
+	if(document.getElementById('quadratic-surfaces').checked){
+		quadraticRT.draw( trans );
 	}
 }
 
