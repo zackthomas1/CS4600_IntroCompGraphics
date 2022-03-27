@@ -28,3 +28,6 @@ Selected foreground image layer can be translated.
 
 <h3> Project 6: Ray Tracing </h3> 
 <p> </p>
+
+<h3> Project 7: Animation </h3> 
+<p> </p>
