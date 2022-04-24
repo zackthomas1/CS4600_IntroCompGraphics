@@ -165,12 +165,36 @@ class MeshDrawer
 	setTexture( img )
 	{
 		// [TO-DO] Bind the texture
+		const texture = gl.createTexture(); 
+		gl.bindTexture(gl.TEXTURE_2D, texture); 
 
 		// You can set the texture image data using the following command.
-		gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img );
+		gl.texImage2D( 
+			gl.TEXTURE_2D, 
+			0, 
+			gl.RGB, 
+			gl.RGB, 
+			gl.UNSIGNED_BYTE, 
+			img 
+		);
 
+		// Set texture parameters
+		gl.generateMipmap(gl.TEXTURE_2D);
+
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAR_FILTER, gl.LINEAR); 
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAR_FILTER, gl.LINEAR_MIPMAP_LINEAR); 
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); 
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); 
+
+		//
 		// [TO-DO] Now that we have a texture, it might be a good idea to set
 		// some uniform parameter(s) of the fragment shader, so that it uses the texture.
+		gl.useProgram(this.prog); 
+		gl.activeTexture(gl.TEXTURE0); 
+		gl.bindTexture(gl.TEXTURE_2D, texture); 
+		const samplerLoc = gl.getUniformLocation(this.prog, 'tex'); 
+		gl.uniform1i(samplerLoc, 0);	
+
 	}
 	
 	// This method is called when the user changes the state of the
@@ -214,16 +238,20 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
 	// [TO-DO] Compute the total force of each particle
 	for(let i = 0; i < springs.length; i++){
 		let spring = springs[i];
+
+		// spring attributes
 		let x0 = positions[spring.p0]; // particle position
 		let x1 = positions[spring.p1];
 		let v0 = velocities[spring.p0]; // particle velocity
 		let v1 = velocities[spring.p1]; 
-		
+
 		// caculate spring force
 		let length = x1.sub(x0).len();
 		let restLengh= spring.rest; 
 		let springDirection = x1.sub(x0).div(length); 
-		let springForce = springDirection.mul(stiffness * (length - restLengh));
+
+		// caculate spring force
+		let springForce = springDirection.mul(stiffness * (length - restLengh)); //stiffness * (length - restlength) * springDir
 
 		// add spring force
 		forces[spring.p0] = forces[spring.p0].add(springForce); 
@@ -240,7 +268,6 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
 	
 	// [TO-DO] Update positions and velocities
 	for(let i = 0; i < velocities.length; i++){
-
 		let acceleration = forces[i].div(particleMass).add(gravity); 
 		let velocity = velocities[i].add(acceleration.mul(dt)); 
 		velocities[i] = velocity; 
@@ -253,7 +280,48 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
 	}
 	
 	// [TO-DO] Handle collisions
-	
+	for(let i = 0; i < positions.length; i++){
+		
+		let floor = new Vec3(-1.0,-1.0,-1.0); 
+		let ceiling = new Vec3(1.0,1.0,1.0); 
+		
+		let pos = positions[i];
+		let vel = velocities[i]; 
+		
+		if(pos.x < floor.x){
+			let h = Math.abs(pos.x) - Math.abs(floor.x); 
+			pos.x += h + (h * restitution);
+			vel.x = vel.x*(-1.0 * restitution);
+		}
+		if(pos.y < floor.y){
+			let h = Math.abs(pos.y) - Math.abs(floor.y); 
+			pos.y += h + (h * restitution);
+			vel.y = vel.y*(-1.0 * restitution);
+		}
+		if(pos.z < floor.z){
+			let h = Math.abs(pos.z) - Math.abs(floor.z); 
+			pos.z += h + (h * restitution);
+			vel.z = vel.z*(-1.0 * restitution);
+		}
+
+		if(pos.x > ceiling.x){
+			let h = Math.abs(pos.x) - Math.abs(ceiling.x); 
+			pos.x -= h + (h * restitution);
+			vel.x = vel.x*(-1.0 * restitution);
+		}
+		if(pos.y > ceiling.y){
+			let h = Math.abs(pos.y) - Math.abs(ceiling.y); 
+			pos.y -= h + (h * restitution);
+			vel.y = vel.y*(-1.0 * restitution);
+		}
+		if(pos.z > ceiling.z){
+			let h = Math.abs(pos.z) - Math.abs(ceiling.z); 
+			pos.z -= h + (h * restitution);
+			vel.z = vel.z*(-1.0 * restitution);
+		}
+
+
+	}
 }
 
 const meshVS = `
@@ -301,7 +369,7 @@ void main(){
 	if(showTex){
 		diffuseColor = texture2D(tex, v_texCoord);
 	}else{
-		diffuseColor =  vec4(0.1, 0.1, 1.0, 0.0);
+		diffuseColor =  vec4(0.3, 0.3, 0.3, 0.0);
 	}
 
 	// dot product between normalized normal and lightDir vectors results 
