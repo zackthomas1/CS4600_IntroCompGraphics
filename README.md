@@ -7,7 +7,7 @@ Course homepage: https://graphics.cs.utah.edu/courses/cs4600/fall2020/
 <p>  A basic compositing program in google chrome.
 Allows basic blending of multiple images.
 Four blend mode options alpha, additive, difference, and multiple, with blend modes selection for each image layer. 
-Also allows alpha channel adjustments for each foreground layer
+Also allows alpha channel adjustments for each foreground layer.
 Selected foreground image layer can be translated. 
 </p>
 
@@ -24,10 +24,10 @@ Selected foreground image layer can be translated.
 <p> A .obj model viewer using WebGL. View 3D models with textures. Option to display vertex normals. No lighting.</p>
 
 <h3> Project 5: Shading </h3> 
-<p> Extends project 4 model viewer web application to implement blinn/phong shading model. Light source is a single directional light.</p>
+<p> Extends project 4 model viewer web application implementing a blinn/phong shading model. Light source is a single directional light.</p>
 
 <h3> Project 6: Ray Tracing </h3> 
-<p> </p>
+<p> Real-time Turner Whitted raytracing for perfect reflections. Also extended the application to use raytracing to render quadratic surfaces, such as a parabloid and a cone. </p>
 
 <h3> Project 7: Animation </h3> 
-<p> </p>
+<p>Implements a basic mass-spring system for physics based animation</p>
