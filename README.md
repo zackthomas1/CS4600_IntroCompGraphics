@@ -7,7 +7,7 @@ Course homepage: https://graphics.cs.utah.edu/courses/cs4600/fall2020/
 <p>  A basic compositing program in google chrome.
 Allows basic blending of multiple images.
 Four blend mode options alpha, additive, difference, and multiple, with blend modes selection for each image layer. 
-Also allows alpha channel adjustments for each foreground layer
+Also allows alpha channel adjustments for each foreground layer.
 Selected foreground image layer can be translated. 
 </p>
 
