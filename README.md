@@ -24,7 +24,7 @@ Selected foreground image layer can be translated.
 <p> A .obj model viewer using WebGL. View 3D models with textures. Option to display vertex normals. No lighting.</p>
 
 <h3> Project 5: Shading </h3> 
-<p> Extends project 4 model viewer web application to implement blinn/phong shading model. Light source is a single directional light.</p>
+<p> Extends project 4 model viewer web application implementing a blinn/phong shading model. Light source is a single directional light.</p>
 
 <h3> Project 6: Ray Tracing </h3> 
 <p> Real-time Turner Whitted raytracing for perfect reflections. Also extended the application to use raytracing to render quadratic surfaces, such as a parabloid and a cone. </p>
