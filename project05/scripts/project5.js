@@ -73,7 +73,7 @@ class MeshDrawer
 		// comile shader program 
 		this.prog = InitShaderProgram(meshVS, meshFS); 
 
-		// get atttribute locations
+		// get attribute locations
 		this.positionLoc = gl.getAttribLocation(this.prog, 'position');
 		this.normalLoc = gl.getAttribLocation(this.prog, 'normal');
 		this.texCoordLoc = gl.getAttribLocation(this.prog, 'texCoord');
@@ -298,7 +298,7 @@ const meshVS = `
 		v_texCoord = texCoord;
 		v_viewFragPos = mv * vec4(position,0.0);
 
-		gl_Position = mvp * yzSwap* vec4(position, 1.0);
+		gl_Position = mvp * yzSwap * vec4(position, 1.0);
 	}
 `; 
 
