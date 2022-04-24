@@ -4,7 +4,7 @@ html {
 	font-family: Arial;
 }
 body {
-	background-image: url(imgs/ground.jpg);
+	background-image: url(../assets/imgs/project02/ground.jpg);
     background-size: 1600px;
 	padding: 0;
 	margin: 0;
